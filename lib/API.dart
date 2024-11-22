@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:developer';
 
 class Schedule_Attributes {
   String? arrival_time;
@@ -25,7 +26,7 @@ class Trip_Attributes {
 
 class Vehicle_Attributes {
   int? bearing;
-  List<Carriage>? carriages;
+  List<Carriage> carriages = [];
   String? current_status;
   int? current_stop_sequence;
   int? direction_id;
@@ -34,7 +35,7 @@ class Vehicle_Attributes {
   double? longitude;
   String? occupancy_status;
   String? revenue;
-  int? speed;
+  double? speed;
 }
 
 class Carriage {
@@ -82,6 +83,9 @@ class Vehicle {
   String? type;
 }
 
+
+
+List<String> tripIDs = [];
 List<Schedule> schedules = [];
 Map<String, Trip> trips = Map<String, Trip>();
 Map<String, Vehicle> vehicles = Map<String, Vehicle>();
@@ -132,9 +136,13 @@ void parseAPIResponse(String response) {
   }
 
   trips = Map<String, Trip>();
-
+  tripIDs = [];
+  if(apiResponse["included"] == null) {
+    return;
+  }
   for(int i = 0; i < apiResponse["included"].length; i++) {
     String id = apiResponse["included"][i]["id"];
+    tripIDs.add(id);
     trips[id] = Trip();
 
     trips[id]!.id   = id;
@@ -162,12 +170,54 @@ Future<String> getVehicleData(List<String> tripIDs) async {
   return response.body;
 }
 
-// void parseVehicles(String data) {
-//   var apiResponse = jsonDecode(data);
-//   for(int i = 0; i < apiResponse["included"].length; i++) {
-//
-//   }
-// }
+void parseVehicles(String data) {
+  var apiResponse = jsonDecode(data);
+  vehicles = Map<String, Vehicle>();
+  if(apiResponse["included"] == null) {
+    return;
+  }
+  for(int i = 0; i < apiResponse["included"].length; i++) {
+    String id = apiResponse["included"][i]["relationships"]["trip"]['data']["id"];
+
+    vehicles[id] = Vehicle();
+    vehicles[id]!.attributes.bearing               = apiResponse["included"][i]["attributes"]["bearing"];
+    vehicles[id]!.attributes.carriages = [];
+    vehicles[id]!.attributes.current_status        = apiResponse["included"][i]["attributes"]["current_status"];
+    vehicles[id]!.attributes.current_stop_sequence = apiResponse["included"][i]["attributes"]["current_stop_sequence"];
+    vehicles[id]!.attributes.direction_id          = apiResponse["included"][i]["attributes"]["direction_id"];
+    vehicles[id]!.attributes.label                 = apiResponse["included"][i]["attributes"]["label"];
+    vehicles[id]!.attributes.latitude              = apiResponse["included"][i]["attributes"]["latitude"];
+    vehicles[id]!.attributes.longitude             = apiResponse["included"][i]["attributes"]["longitude"];
+    vehicles[id]!.attributes.occupancy_status      = apiResponse["included"][i]["attributes"]["occupancy_status"];
+    vehicles[id]!.attributes.revenue               = apiResponse["included"][i]["attributes"]["revenue"];
+    vehicles[id]!.attributes.speed                 = apiResponse["included"][i]["attributes"]["speed"];
+
+    for(int j = 0; j < apiResponse["included"][i]["attributes"]["carriages"].length; j++) {
+      vehicles[id]!.attributes.carriages.add(Carriage());
+      vehicles[id]!.attributes.carriages[j].occupancy_status     = apiResponse["included"][i]["attributes"]["carriages"][j]["occupancy_status"];
+      vehicles[id]!.attributes.carriages[j].occupancy_percentage = apiResponse["included"][i]["attributes"]["carriages"][j]["occupancy_percentage"];
+      vehicles[id]!.attributes.carriages[j].label                = apiResponse["included"][i]["attributes"]["carriages"][j]["label"];
+    }
+  }
+  for(int i = 0; i < apiResponse["data"].length; i++) {
+    String id = apiResponse["data"][i]["id"];
+    if(vehicles[id] == null) {
+      vehicles[id] = Vehicle();
+
+      vehicles[id]!.attributes.bearing               = -1;
+      vehicles[id]!.attributes.carriages             = [];
+      vehicles[id]!.attributes.current_status        = "";
+      vehicles[id]!.attributes.current_stop_sequence = -1;
+      vehicles[id]!.attributes.direction_id          = -1;
+      vehicles[id]!.attributes.label                 = "";
+      vehicles[id]!.attributes.latitude              = -1;
+      vehicles[id]!.attributes.longitude             = -1;
+      vehicles[id]!.attributes.occupancy_status      = "";
+      vehicles[id]!.attributes.revenue               = "";
+      vehicles[id]!.attributes.speed                 = -1;
+    }
+  }
+}
 
 int timeToArrive(Schedule schedule) {
   if(schedule.attributes.arrival_time == null) {
@@ -179,4 +229,19 @@ int timeToArrive(Schedule schedule) {
   var now = DateTime.now();
   var delta = arrival.difference(now);
   return delta.inSeconds;
+}
+
+String formatWord(String word, String type) {
+  word = word.replaceAll("_", " ");
+  if(word.length >= 1) {
+    word = "${word[0]}${word.substring(1).toLowerCase()}";
+  }
+  switch(type) {
+    case "current_status":
+      word = word.replaceAll(" at", "").replaceAll(" to", "");
+      break;
+    default:
+      break;
+  }
+  return word;
 }

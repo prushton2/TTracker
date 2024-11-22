@@ -3,9 +3,11 @@ import 'dart:core';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'dart:developer';
 
 import 'Colors.dart' as TColors;
 import 'API.dart' as API;
+import 'Geolocator.dart' as Geolocator;
 
 void main() {
   runApp(const MyApp());
@@ -55,7 +57,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String _station = "";
-  String _id = "";
   String _color = "#888800";
   List<Widget> body = [];
   Map<String, bool> trains = Map<String, bool>();
@@ -67,7 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     String contents = await File('res/stops.json').readAsString();
 
-    int index = 199;
+    int index = 250;
 
     var stops = jsonDecode(contents);
     station = stops["data"][index]["attributes"]["name"];
@@ -77,12 +78,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
     String trainData = await API.getSchedules(id, 60);
     API.  parseAPIResponse(trainData);
+    
+    String vehicleData = await API.getVehicleData(API.tripIDs);
+    API.parseVehicles(vehicleData);
 
     body = [];
 
     for(int i = 0; i<API.schedules.length; i++) {
       API.Schedule schedule = API.schedules[i];
       API.Trip trip = API.trips[schedule.relationships.trip!.id]!;
+      API.Vehicle vehicle = API.vehicles[schedule.relationships.trip!.id]!;
 
       String destination = trip.attributes.headsign!;
       String lineColor = TColors.getColor(schedule.relationships.route!.id); //trainData["data"][i]["relationships"]["route"]["data"]["id"]);
@@ -95,8 +100,27 @@ class _MyHomePageState extends State<MyHomePage> {
         continue;
       }
 
-
       trains[destination] = true;
+
+      List<Widget> carOccupancy = [Text("L")];
+
+      for(int j = 0; j < vehicle.attributes.carriages.length; j++) {
+
+        Color color = Colors.white;
+        if(vehicle.attributes.carriages[j].occupancy_percentage == null) {
+          color = Colors.grey;
+        } else if(vehicle.attributes.carriages[j].occupancy_percentage! > 60) {
+          color = Colors.red;
+        } else if (vehicle.attributes.carriages[j].occupancy_percentage! > 30) {
+          color = Colors.orange;
+        }
+        carOccupancy.add(
+          Text(
+            "C",
+            style: TextStyle(color: color)
+          )
+        );
+      }
 
       String arriveIn = (API.timeToArrive(schedule)/60).toInt().toString()+"m";
       body.add(
@@ -117,7 +141,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     color: TColors.HexColor(lineColor)
                 ),
                 padding: EdgeInsets.all(10),
-                child: Text(trip.relationships.route!.id) //trainData["included"][i]["relationships"]["route"]["data"]["id"]+" Line"),
+                child: Row(children: [Text(trip.relationships.route!.id), Spacer(), Text(schedule.relationships.trip!.id)])
             ),
             Container(
                 width: MediaQuery.sizeOf(context).width-100,
@@ -133,7 +157,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 padding: EdgeInsets.all(20),
                 margin: EdgeInsetsDirectional.only(bottom: 10),
-                child: Text(trip.attributes.headsign! + "     " + arriveIn ) //trainData["included"][i]["attributes"]["headsign"]),
+                child: Align(alignment: Alignment.topLeft, child: Column(children: [
+                  Text(trip.attributes.headsign! + "     "  + arriveIn+"\n"+API.formatWord(vehicle.attributes.current_status!, "current_status"), textAlign: TextAlign.left),
+                  Row(children: carOccupancy)
+                ]))
             )
           ])
         )
@@ -143,8 +170,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
     setState(() {
-      _color = TColors.getStationColor(id, TColors.getColor(API.schedules[0].relationships.route!.id));
-      _id = id;
+      if(API.schedules.length >= 1) {
+        _color = TColors.getColor(API.schedules[0].relationships.route!.id);
+      } else {
+        _color = "#888888";
+      }
+      _color = TColors.getStationColor(id, _color);
       _station = station;
     });
   }
@@ -158,10 +189,11 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(_station),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: body,
-        ),
+        child: Expanded(
+          child: ListView(
+            children: body
+          )
+        )
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: initialize,

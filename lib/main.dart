@@ -1,7 +1,22 @@
+// import 'dart:nativewrappers/_internal/vm/lib/core_patch.dart';
+import 'dart:core';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+
+import 'Colors.dart' as TColors;
+import 'API.dart' as API;
 
 void main() {
   runApp(const MyApp());
+}
+
+class Train {
+  String destination = "";
+  String line = "";
+  int timeToArr = 0;
+  List<int> occupancyPct = [];
+  String status = "";
 }
 
 class MyApp extends StatelessWidget {
@@ -11,114 +26,147 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Station Name',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme(
+          brightness: Brightness.dark,
+          primary: Colors.black12,
+          onPrimary: Colors.white,
+          secondary: Colors.blue,
+          onSecondary: Colors.white,
+          error: Colors.orange,
+          onError: Colors.black,
+          surface: Colors.black12,
+          onSurface: Colors.white,
+        ),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Station Name'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
-
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  String _station = "";
+  String _id = "";
+  String _color = "#888800";
+  List<Widget> body = [];
+  Map<String, bool> trains = Map<String, bool>();
 
-  void _incrementCounter() {
+  Future<void> initialize() async {
+
+    String station = "";
+    String id = "";
+
+    String contents = await File('res/stops.json').readAsString();
+
+    int index = 199;
+
+    var stops = jsonDecode(contents);
+    station = stops["data"][index]["attributes"]["name"];
+    id = stops["data"][index]["id"];
+
+    trains = Map<String, bool>();
+
+    String trainData = await API.getSchedules(id, 60);
+    API.  parseAPIResponse(trainData);
+
+    body = [];
+
+    for(int i = 0; i<API.schedules.length; i++) {
+      API.Schedule schedule = API.schedules[i];
+      API.Trip trip = API.trips[schedule.relationships.trip!.id]!;
+
+      String destination = trip.attributes.headsign!;
+      String lineColor = TColors.getColor(schedule.relationships.route!.id); //trainData["data"][i]["relationships"]["route"]["data"]["id"]);
+
+      if(trains[destination] != null) {
+        continue;
+      }
+
+      if(API.timeToArrive(schedule) <= 0) {
+        continue;
+      }
+
+
+      trains[destination] = true;
+
+      String arriveIn = (API.timeToArrive(schedule)/60).toInt().toString()+"m";
+      body.add(
+        Container(
+          margin: EdgeInsets.only(top: 20),
+          child: Column(children: [
+            Container(
+                height: 50,
+                width: MediaQuery.sizeOf(context).width-100,
+                decoration: BoxDecoration(
+                    border: Border.all(
+                        color: TColors.HexColor(lineColor)
+                    ),
+                    borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20)
+                    ),
+                    color: TColors.HexColor(lineColor)
+                ),
+                padding: EdgeInsets.all(10),
+                child: Text(trip.relationships.route!.id) //trainData["included"][i]["relationships"]["route"]["data"]["id"]+" Line"),
+            ),
+            Container(
+                width: MediaQuery.sizeOf(context).width-100,
+                decoration: BoxDecoration(
+                    border: Border.all (
+                        strokeAlign: BorderSide.strokeAlignInside,
+                        color: TColors.HexColor(lineColor)
+                    ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20)
+                  )
+                ),
+                padding: EdgeInsets.all(20),
+                margin: EdgeInsetsDirectional.only(bottom: 10),
+                child: Text(trip.attributes.headsign! + "     " + arriveIn ) //trainData["included"][i]["attributes"]["headsign"]),
+            )
+          ])
+        )
+      );
+    }
+
+
+
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _color = TColors.getStationColor(id, TColors.getColor(API.schedules[0].relationships.route!.id));
+      _id = id;
+      _station = station;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    // initialize();
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        backgroundColor: TColors.HexColor(_color),
+        title: Text(_station),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+          children: body,
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        onPressed: initialize,
+        tooltip: 'Refresh',
+        child: const Icon(Icons.refresh),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }

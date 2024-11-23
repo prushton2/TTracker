@@ -66,18 +66,15 @@ class _MyHomePageState extends State<MyHomePage> {
     String station = "";
     String id = "";
 
-    int defaultIndex = 225;
-    var stopInfo = Stops.stopInfo[defaultIndex];
-
+    int defaultIndex = 175;
+    Stops.Stop stopInfo = Stops.stopInfo[defaultIndex];
 
     try {
       var pos = await Geolocator.determinePosition();
       stopInfo = Geolocator.getNearestStop(pos);
     } catch (e) {
       log(e.toString());
-      return;
     }
-    // var stopInfo = Stops.stopInfo[index];
 
     station = stopInfo.name;
     id = stopInfo.id;
@@ -85,17 +82,19 @@ class _MyHomePageState extends State<MyHomePage> {
     trains = Map<String, bool>();
 
     String trainData = await API.getSchedules(id, 60);
-    API.  parseAPIResponse(trainData);
+    API.parseAPIResponse(trainData);
     
     String vehicleData = await API.getVehicleData(API.tripIDs);
     API.parseVehicles(vehicleData);
 
     List<Widget> body = [];
 
+
+
+
     for(int i = 0; i<API.schedules.length; i++) {
       API.Schedule schedule = API.schedules[i];
       API.Trip trip = API.trips[schedule.relationships.trip!.id]!;
-      API.Vehicle vehicle = API.vehicles[schedule.relationships.trip!.id]!;
 
       String destination = trip.attributes.headsign!;
       String lineColor = TColors.getColor(schedule.relationships.route!.id); //trainData["data"][i]["relationships"]["route"]["data"]["id"]);
@@ -107,7 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if(API.timeToArrive(schedule) <= 0) {
         continue;
       }
-
+      API.Vehicle vehicle = API.vehicles[schedule.relationships.trip!.id]!;
       trains[destination] = true;
 
       List<Widget> carOccupancy = [Text("L")];
@@ -213,11 +212,6 @@ class _MyHomePageState extends State<MyHomePage> {
           )
         )
       ])
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: initialize,
-      //   tooltip: 'Refresh',
-      //   child: const Icon(Icons.refresh),
-      // ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

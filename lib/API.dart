@@ -173,6 +173,26 @@ Future<String> getVehicleData(List<String> tripIDs) async {
 void parseVehicles(String data) {
   var apiResponse = jsonDecode(data);
   vehicles = Map<String, Vehicle>();
+
+  for(int i = 0; i < apiResponse["data"].length; i++) {
+    String id = apiResponse["data"][i]["id"];
+    if(vehicles[id] == null) {
+      vehicles[id] = Vehicle();
+
+      vehicles[id]!.attributes.bearing               = -1;
+      vehicles[id]!.attributes.carriages             = [];
+      vehicles[id]!.attributes.current_status        = "";
+      vehicles[id]!.attributes.current_stop_sequence = -1;
+      vehicles[id]!.attributes.direction_id          = -1;
+      vehicles[id]!.attributes.label                 = "";
+      vehicles[id]!.attributes.latitude              = -1;
+      vehicles[id]!.attributes.longitude             = -1;
+      vehicles[id]!.attributes.occupancy_status      = "";
+      vehicles[id]!.attributes.revenue               = "";
+      vehicles[id]!.attributes.speed                 = -1;
+    }
+  }
+
   if(apiResponse["included"] == null) {
     return;
   }
@@ -197,24 +217,6 @@ void parseVehicles(String data) {
       vehicles[id]!.attributes.carriages[j].occupancy_status     = apiResponse["included"][i]["attributes"]["carriages"][j]["occupancy_status"];
       vehicles[id]!.attributes.carriages[j].occupancy_percentage = apiResponse["included"][i]["attributes"]["carriages"][j]["occupancy_percentage"];
       vehicles[id]!.attributes.carriages[j].label                = apiResponse["included"][i]["attributes"]["carriages"][j]["label"];
-    }
-  }
-  for(int i = 0; i < apiResponse["data"].length; i++) {
-    String id = apiResponse["data"][i]["id"];
-    if(vehicles[id] == null) {
-      vehicles[id] = Vehicle();
-
-      vehicles[id]!.attributes.bearing               = -1;
-      vehicles[id]!.attributes.carriages             = [];
-      vehicles[id]!.attributes.current_status        = "";
-      vehicles[id]!.attributes.current_stop_sequence = -1;
-      vehicles[id]!.attributes.direction_id          = -1;
-      vehicles[id]!.attributes.label                 = "";
-      vehicles[id]!.attributes.latitude              = -1;
-      vehicles[id]!.attributes.longitude             = -1;
-      vehicles[id]!.attributes.occupancy_status      = "";
-      vehicles[id]!.attributes.revenue               = "";
-      vehicles[id]!.attributes.speed                 = -1;
     }
   }
 }

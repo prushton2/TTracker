@@ -8,6 +8,7 @@ import 'dart:developer';
 import 'Colors.dart' as TColors;
 import 'API.dart' as API;
 import 'Geolocator.dart' as Geolocator;
+import 'stops.dart' as Stops;
 
 void main() {
   runApp(const MyApp());
@@ -58,21 +59,31 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String _station = "";
   String _color = "#888800";
-  List<Widget> body = [];
+  String _location = "";
+  List<Widget> _body = [];
   Map<String, bool> trains = Map<String, bool>();
 
   Future<void> initialize() async {
-
     String station = "";
     String id = "";
 
-    String contents = await File('res/stops.json').readAsString();
+    int defaultIndex = 225;
+    var stopInfo = Stops.stopInfo[defaultIndex];
 
-    int index = 250;
 
-    var stops = jsonDecode(contents);
-    station = stops["data"][index]["attributes"]["name"];
-    id = stops["data"][index]["id"];
+    try {
+      var pos = await Geolocator.determinePosition();
+      stopInfo = Geolocator.getNearestStop(pos);
+    } catch (e) {
+      log(e.toString());
+      return;
+    }
+
+
+    // var stopInfo = Stops.stopInfo[index];
+
+    station = stopInfo.name;
+    id = stopInfo.id;
 
     trains = Map<String, bool>();
 
@@ -82,7 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
     String vehicleData = await API.getVehicleData(API.tripIDs);
     API.parseVehicles(vehicleData);
 
-    body = [];
+    List<Widget> body = [];
 
     for(int i = 0; i<API.schedules.length; i++) {
       API.Schedule schedule = API.schedules[i];
@@ -141,7 +152,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     color: TColors.HexColor(lineColor)
                 ),
                 padding: EdgeInsets.all(10),
-                child: Row(children: [Text(trip.relationships.route!.id), Spacer(), Text(schedule.relationships.trip!.id)])
+                child: Text(trip.relationships.route!.id)
             ),
             Container(
                 width: MediaQuery.sizeOf(context).width-100,
@@ -177,6 +188,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       _color = TColors.getStationColor(id, _color);
       _station = station;
+      _body = body;
     });
   }
 
@@ -188,13 +200,14 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: TColors.HexColor(_color),
         title: Text(_station),
       ),
-      body: Center(
-        child: Expanded(
+      body: Flex(
+        direction: Axis.vertical,
+        children: [Expanded(
           child: ListView(
-            children: body
+            children: _body
           )
         )
-      ),
+      ]),
       floatingActionButton: FloatingActionButton(
         onPressed: initialize,
         tooltip: 'Refresh',

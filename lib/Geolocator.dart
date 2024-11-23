@@ -1,6 +1,8 @@
 import 'package:geolocator/geolocator.dart';
+import 'stops.dart' as Stops;
+import 'dart:math';
 
-Future<Position> _determinePosition() async {
+Future<Position> determinePosition() async {
   bool serviceEnabled;
   LocationPermission permission;
 
@@ -35,4 +37,23 @@ Future<Position> _determinePosition() async {
   // When we reach here, permissions are granted and we can
   // continue accessing the position of the device.
   return await Geolocator.getCurrentPosition();
+}
+
+
+Stops.Stop getNearestStop(Position pos) {
+  double lowestDistance = 360;
+  Stops.Stop nearestStop = Stops.stopInfo[0];
+  for(int i = 0; i < Stops.stopInfo.length; i++) {
+    double dist = sqrt( pow(pos.latitude - Stops.stopInfo[i].latitude, 2) + pow(pos.longitude - Stops.stopInfo[i].longitude, 2));
+
+    if(dist < lowestDistance) {
+      lowestDistance = dist;
+      nearestStop = Stops.stopInfo[i];
+    }
+  }
+
+  if(lowestDistance == 360) {
+    throw Exception("How");
+  }
+  return nearestStop;
 }

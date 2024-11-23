@@ -2,7 +2,7 @@
 import 'dart:core';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'dart:convert';
+import 'dart:async';
 import 'dart:developer';
 
 import 'Colors.dart' as TColors;
@@ -58,8 +58,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String _station = "";
-  String _color = "#888800";
-  String _location = "";
+  String _color = "#888888";
   List<Widget> _body = [];
   Map<String, bool> trains = Map<String, bool>();
 
@@ -78,8 +77,6 @@ class _MyHomePageState extends State<MyHomePage> {
       log(e.toString());
       return;
     }
-
-
     // var stopInfo = Stops.stopInfo[index];
 
     station = stopInfo.name;
@@ -193,6 +190,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
+  void initState() {
+    initialize();
+    Timer mytimer = Timer.periodic(Duration(seconds: 10), (timer) {
+      initialize();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     // initialize();
     return Scaffold(
@@ -207,12 +212,12 @@ class _MyHomePageState extends State<MyHomePage> {
             children: _body
           )
         )
-      ]),
-      floatingActionButton: FloatingActionButton(
-        onPressed: initialize,
-        tooltip: 'Refresh',
-        child: const Icon(Icons.refresh),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ])
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: initialize,
+      //   tooltip: 'Refresh',
+      //   child: const Icon(Icons.refresh),
+      // ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

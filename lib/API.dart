@@ -110,7 +110,7 @@ Future<String> getSchedules(String stopID, int lookAheadMinutes) async {
   }
 
   var urlString = "https://api-v3.mbta.com/predictions?filter[stop]="+stopID+"&include=vehicle,trip&sort=arrival_time";
-  // log(urlString);
+  log(urlString);
   var url = Uri.parse(urlString);
   var response = await http.get(url);
   return response.body;
@@ -139,13 +139,15 @@ void parseAPIResponse(String response) {
     predictions[i].attributes.stop_sequence         = apiResponse["data"][i]["attributes"]["stop_sequence"];
     predictions[i].attributes.update_type           = apiResponse["data"][i]["attributes"]["update_type"];
   
-    predictions[i].relationships.route   = Data(apiResponse["data"][i]["relationships"]["route"]["data"]["id"], apiResponse["data"][i]["relationships"]["route"]["data"]["type"]);
-    predictions[i].relationships.stop    = Data(apiResponse["data"][i]["relationships"]["stop"]["data"]["id"],  apiResponse["data"][i]["relationships"]["stop"]["data"]["type"]);
-    predictions[i].relationships.trip    = Data(apiResponse["data"][i]["relationships"]["trip"]["data"]["id"],  apiResponse["data"][i]["relationships"]["trip"]["data"]["type"]);
-    predictions[i].relationships.vehicle = Data(apiResponse["data"][i]["relationships"]["vehicle"]["data"]["id"],  apiResponse["data"][i]["relationships"]["vehicle"]["data"]["type"]);
+    predictions[i].relationships.route   = Data(apiResponse["data"][i]["relationships"]["route"]["data"]["id"],   apiResponse["data"][i]["relationships"]["route"]["data"]["type"]);
+    predictions[i].relationships.stop    = Data(apiResponse["data"][i]["relationships"]["stop"]["data"]["id"],    apiResponse["data"][i]["relationships"]["stop"]["data"]["type"]);
+    predictions[i].relationships.trip    = Data(apiResponse["data"][i]["relationships"]["trip"]["data"]["id"],    apiResponse["data"][i]["relationships"]["trip"]["data"]["type"]);
 
+    if(apiResponse["data"][i]["relationships"]["vehicle"]["data"] != null) {
+      predictions[i].relationships.vehicle = Data(apiResponse["data"][i]["relationships"]["vehicle"]["data"]["id"], apiResponse["data"][i]["relationships"]["vehicle"]["data"]["type"]);
+      vehicles[predictions[i].relationships.vehicle!.id] = Vehicle();
+    }
     trips[predictions[i].relationships.trip!.id] = Trip();
-    vehicles[predictions[i].relationships.vehicle!.id] = Vehicle();
 }
 
   if(apiResponse["included"] == null) {

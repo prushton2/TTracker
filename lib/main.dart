@@ -67,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
     String station = "";
     String id = "";
 
-    int defaultIndex = 199;
+    int defaultIndex = 140;
     Stops.Stop stopInfo = Stops.stopInfo[defaultIndex];
 
     try {
@@ -84,19 +84,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
     String trainData = await API.getSchedules(id, 60);
     API.parseAPIResponse(trainData);
-    
-    // String vehicleData = await API.getVehicleData(API.tripIDs);
-    // API.parseVehicles(vehicleData);
-
     List<Widget> body = [];
-
-
-
 
     for(int i = 0; i<API.predictions.length; i++) {
       API.Prediction prediction = API.predictions[i];
       API.Trip trip = API.trips[prediction.relationships.trip!.id]!;
-      API.Vehicle vehicle = API.vehicles[prediction.relationships.vehicle!.id]!;
+      API.Vehicle vehicle = API.Vehicle();
+
+      if(prediction.relationships.vehicle != null) {
+        vehicle = API.vehicles[prediction.relationships.vehicle!.id]!;
+      }
 
       String destination = trip.attributes.headsign!;
       String lineColor = TColors.getColor(prediction.relationships.route!.id); //trainData["data"][i]["relationships"]["route"]["data"]["id"]);

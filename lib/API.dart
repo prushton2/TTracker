@@ -3,39 +3,43 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer';
 
-class Schedule_Attributes {
+class Prediction_Attributes {
   String? arrival_time;
+  int? arrival_uncertainty;
   String? departure_time;
+  int? departure_uncertainty;
   int? direction_id;
+  bool? last_trip;
+  String? revenue;
   int? drop_off_type;
-  int? pickup_type;
-  String? stop_headsign;
+  String? schedule_relationship;
+  String? status;
   int? stop_sequence;
-  bool? timepoint;
+  String? update_type;
 }
 
 class Trip_Attributes {
-  int? bikes_allowed;
-  String? block_id;
-  int? direction_id;
-  String? headsign;
-  String? name;
-  String? revenue;
-  int? wheelchair_accessible;
+  int? bikes_allowed = -1;
+  String? block_id = "";
+  int? direction_id = -1;
+  String? headsign = "";
+  String? name = "";
+  String? revenue = "";
+  int? wheelchair_accessible = -1;
 }
 
 class Vehicle_Attributes {
-  int? bearing;
+  int? bearing = -1;
   List<Carriage> carriages = [];
-  String? current_status;
-  int? current_stop_sequence;
-  int? direction_id;
-  String? label;
-  double? latitude;
-  double? longitude;
-  String? occupancy_status;
-  String? revenue;
-  double? speed;
+  String? current_status = "";
+  int? current_stop_sequence = -1;
+  int? direction_id = -1;
+  String? label = "";
+  double? latitude = -1;
+  double? longitude = -1;
+  String? occupancy_status = "";
+  String? revenue = "";
+  double? speed = -1;
 }
 
 class Carriage {
@@ -51,6 +55,7 @@ class Relationships {
   Data? route_pattern;
   Data? service;
   Data? shape;
+  Data? vehicle;
 }
 
 class Data {
@@ -63,8 +68,8 @@ class Data {
   }
 }
 
-class Schedule {
-  Schedule_Attributes attributes = Schedule_Attributes();
+class Prediction {
+  Prediction_Attributes attributes = Prediction_Attributes();
   String? id;
   Relationships relationships = Relationships();
   String? type;
@@ -86,7 +91,7 @@ class Vehicle {
 
 
 List<String> tripIDs = [];
-List<Schedule> schedules = [];
+List<Prediction> predictions = [];
 Map<String, Trip> trips = Map<String, Trip>();
 Map<String, Vehicle> vehicles = Map<String, Vehicle>();
 
@@ -104,8 +109,8 @@ Future<String> getSchedules(String stopID, int lookAheadMinutes) async {
     fmt_end = (int.parse(fmt_end.split(":")[0]) + 24).toString() + ":" + fmt_end.split(":")[1];
   }
 
-  var urlString = "https://api-v3.mbta.com/schedules?filter[stop]="+stopID+"&filter[min_time]="+fmt_now+"&filter[max_time]="+fmt_end+"&include=trip&sort=arrival_time";
-  // var urlString = "https://api-v3.mbta.com/schedules?filter[stop]="+stopID+"&filter[min_time]=21:30&filter[max_time]=22:30&include=trip&sort=arrival_time";
+  var urlString = "https://api-v3.mbta.com/predictions?filter[stop]="+stopID+"&include=vehicle,trip&sort=arrival_time";
+  // log(urlString);
   var url = Uri.parse(urlString);
   var response = await http.get(url);
   return response.body;
@@ -113,115 +118,84 @@ Future<String> getSchedules(String stopID, int lookAheadMinutes) async {
 
 void parseAPIResponse(String response) {
   var apiResponse = jsonDecode(response);
-  schedules = [];
+  predictions = [];
   for(int i = 0; i < apiResponse["data"].length; i++) {
     String id = apiResponse["data"][i]["id"];
-    schedules.add(Schedule());
+    predictions.add(Prediction());
 
-    schedules[i].id = id;
-    schedules[i].type = apiResponse["data"][i]["type"];
+    predictions[i].id = id;
+    predictions[i].type = apiResponse["data"][i]["type"];
+    
+    predictions[i].attributes.arrival_time          = apiResponse["data"][i]["attributes"]["arrival_time"];
+    predictions[i].attributes.arrival_uncertainty   = apiResponse["data"][i]["attributes"]["arrival_uncertainty"];
+    predictions[i].attributes.departure_time        = apiResponse["data"][i]["attributes"]["departure_time"];
+    predictions[i].attributes.departure_uncertainty = apiResponse["data"][i]["attributes"]["departure_uncertainty"];
+    predictions[i].attributes.direction_id          = apiResponse["data"][i]["attributes"]["direction_id"];
+    predictions[i].attributes.last_trip             = apiResponse["data"][i]["attributes"]["last_trip"];
+    predictions[i].attributes.revenue               = apiResponse["data"][i]["attributes"]["revenue"];
+    predictions[i].attributes.drop_off_type         = apiResponse["data"][i]["attributes"]["drop_off_type"];
+    predictions[i].attributes.schedule_relationship = apiResponse["data"][i]["attributes"]["schedule_relationship"];
+    predictions[i].attributes.status                = apiResponse["data"][i]["attributes"]["status"];
+    predictions[i].attributes.stop_sequence         = apiResponse["data"][i]["attributes"]["stop_sequence"];
+    predictions[i].attributes.update_type           = apiResponse["data"][i]["attributes"]["update_type"];
+  
+    predictions[i].relationships.route   = Data(apiResponse["data"][i]["relationships"]["route"]["data"]["id"], apiResponse["data"][i]["relationships"]["route"]["data"]["type"]);
+    predictions[i].relationships.stop    = Data(apiResponse["data"][i]["relationships"]["stop"]["data"]["id"],  apiResponse["data"][i]["relationships"]["stop"]["data"]["type"]);
+    predictions[i].relationships.trip    = Data(apiResponse["data"][i]["relationships"]["trip"]["data"]["id"],  apiResponse["data"][i]["relationships"]["trip"]["data"]["type"]);
+    predictions[i].relationships.vehicle = Data(apiResponse["data"][i]["relationships"]["vehicle"]["data"]["id"],  apiResponse["data"][i]["relationships"]["vehicle"]["data"]["type"]);
 
-    schedules[i].attributes.arrival_time   = apiResponse["data"][i]["attributes"]["arrival_time"];
-    schedules[i].attributes.departure_time = apiResponse["data"][i]["attributes"]["departure_time"];
-    schedules[i].attributes.direction_id   = apiResponse["data"][i]["attributes"]["direction_id"];
-    schedules[i].attributes.drop_off_type  = apiResponse["data"][i]["attributes"]["drop_off_type"];
-    schedules[i].attributes.pickup_type    = apiResponse["data"][i]["attributes"]["pickup_type"];
-    schedules[i].attributes.stop_headsign  = apiResponse["data"][i]["attributes"]["stop_headsign"];
-    schedules[i].attributes.stop_sequence  = apiResponse["data"][i]["attributes"]["stop_sequence"];
-    schedules[i].attributes.timepoint      = apiResponse["data"][i]["attributes"]["timepoint"];
+    trips[predictions[i].relationships.trip!.id] = Trip();
+    vehicles[predictions[i].relationships.vehicle!.id] = Vehicle();
+}
 
-    schedules[i].relationships.route = Data(apiResponse["data"][i]["relationships"]["route"]["data"]["id"], apiResponse["data"][i]["relationships"]["route"]["data"]["type"]);
-    schedules[i].relationships.stop  = Data(apiResponse["data"][i]["relationships"]["stop"]["data"]["id"],  apiResponse["data"][i]["relationships"]["stop"]["data"]["type"]);
-    schedules[i].relationships.trip  = Data(apiResponse["data"][i]["relationships"]["trip"]["data"]["id"],  apiResponse["data"][i]["relationships"]["trip"]["data"]["type"]);
-  }
-
-  trips = Map<String, Trip>();
-  tripIDs = [];
   if(apiResponse["included"] == null) {
+    log("included is null");
     return;
   }
   for(int i = 0; i < apiResponse["included"].length; i++) {
     String id = apiResponse["included"][i]["id"];
-    tripIDs.add(id);
-    trips[id] = Trip();
 
-    trips[id]!.id   = id;
-    trips[id]!.type = apiResponse["included"][i]["type"];
+    if(apiResponse["included"][i]["type"] == "trip") {
+      tripIDs.add(id);
+      trips[id] = Trip();
 
-    trips[id]!.attributes.bikes_allowed          = apiResponse["included"][i]["attributes"]["bikes_allowed"];
-    trips[id]!.attributes.block_id               = apiResponse["included"][i]["attributes"]["block_id"];
-    trips[id]!.attributes.direction_id           = apiResponse["included"][i]["attributes"]["direction_id"];
-    trips[id]!.attributes.headsign               = apiResponse["included"][i]["attributes"]["headsign"];
-    trips[id]!.attributes.name                   = apiResponse["included"][i]["attributes"]["name"];
-    trips[id]!.attributes.revenue                = apiResponse["included"][i]["attributes"]["revenue"];
-    trips[id]!.attributes.wheelchair_accessible  = apiResponse["included"][i]["attributes"]["wheelchair_accessible"];
+      trips[id]!.id   = id;
+      trips[id]!.type = apiResponse["included"][i]["type"];
 
-    trips[id]!.relationships.route          = Data(apiResponse["included"][i]["relationships"]["route"]["data"]["id"],         apiResponse["included"][i]["relationships"]["route"]["data"]["type"]);
-    trips[id]!.relationships.route_pattern  = Data(apiResponse["included"][i]["relationships"]["route_pattern"]["data"]["id"], apiResponse["included"][i]["relationships"]["route_pattern"]["data"]["type"]);
-    trips[id]!.relationships.service        = Data(apiResponse["included"][i]["relationships"]["service"]["data"]["id"],       apiResponse["included"][i]["relationships"]["service"]["data"]["type"]);
-    trips[id]!.relationships.shape          = Data(apiResponse["included"][i]["relationships"]["shape"]["data"]["id"],         apiResponse["included"][i]["relationships"]["shape"]["data"]["type"]);
-  }
-}
+      trips[id]!.attributes.bikes_allowed          = apiResponse["included"][i]["attributes"]["bikes_allowed"];
+      trips[id]!.attributes.block_id               = apiResponse["included"][i]["attributes"]["block_id"];
+      trips[id]!.attributes.direction_id           = apiResponse["included"][i]["attributes"]["direction_id"];
+      trips[id]!.attributes.headsign               = apiResponse["included"][i]["attributes"]["headsign"];
+      trips[id]!.attributes.name                   = apiResponse["included"][i]["attributes"]["name"];
+      trips[id]!.attributes.revenue                = apiResponse["included"][i]["attributes"]["revenue"];
+      trips[id]!.attributes.wheelchair_accessible  = apiResponse["included"][i]["attributes"]["wheelchair_accessible"];
+    }
 
-Future<String> getVehicleData(List<String> tripIDs) async {
-  var urlString = "https://api-v3.mbta.com/trips?filter[id]="+tripIDs.join(",")+"&include=vehicle";
-  var url = Uri.parse(urlString);
-  var response = await http.get(url);
-  return response.body;
-}
-
-void parseVehicles(String data) {
-  var apiResponse = jsonDecode(data);
-  vehicles = Map<String, Vehicle>();
-
-  for(int i = 0; i < apiResponse["data"].length; i++) {
-    String id = apiResponse["data"][i]["id"];
-    if(vehicles[id] == null) {
+    else if (apiResponse["included"][i]["type"] == "vehicle") {
       vehicles[id] = Vehicle();
+      vehicles[id]!.attributes.bearing               = apiResponse["included"][i]["attributes"]["bearing"];
+      vehicles[id]!.attributes.carriages = [];
+      vehicles[id]!.attributes.current_status        = apiResponse["included"][i]["attributes"]["current_status"];
+      vehicles[id]!.attributes.current_stop_sequence = apiResponse["included"][i]["attributes"]["current_stop_sequence"];
+      vehicles[id]!.attributes.direction_id          = apiResponse["included"][i]["attributes"]["direction_id"];
+      vehicles[id]!.attributes.label                 = apiResponse["included"][i]["attributes"]["label"];
+      vehicles[id]!.attributes.latitude              = apiResponse["included"][i]["attributes"]["latitude"];
+      vehicles[id]!.attributes.longitude             = apiResponse["included"][i]["attributes"]["longitude"];
+      vehicles[id]!.attributes.occupancy_status      = apiResponse["included"][i]["attributes"]["occupancy_status"];
+      vehicles[id]!.attributes.revenue               = apiResponse["included"][i]["attributes"]["revenue"];
+      vehicles[id]!.attributes.speed                 = apiResponse["included"][i]["attributes"]["speed"];
 
-      vehicles[id]!.attributes.bearing               = -1;
-      vehicles[id]!.attributes.carriages             = [];
-      vehicles[id]!.attributes.current_status        = "";
-      vehicles[id]!.attributes.current_stop_sequence = -1;
-      vehicles[id]!.attributes.direction_id          = -1;
-      vehicles[id]!.attributes.label                 = "";
-      vehicles[id]!.attributes.latitude              = -1;
-      vehicles[id]!.attributes.longitude             = -1;
-      vehicles[id]!.attributes.occupancy_status      = "";
-      vehicles[id]!.attributes.revenue               = "";
-      vehicles[id]!.attributes.speed                 = -1;
-    }
-  }
-
-  if(apiResponse["included"] == null) {
-    return;
-  }
-  for(int i = 0; i < apiResponse["included"].length; i++) {
-    String id = apiResponse["included"][i]["relationships"]["trip"]['data']["id"];
-
-    vehicles[id] = Vehicle();
-    vehicles[id]!.attributes.bearing               = apiResponse["included"][i]["attributes"]["bearing"];
-    vehicles[id]!.attributes.carriages = [];
-    vehicles[id]!.attributes.current_status        = apiResponse["included"][i]["attributes"]["current_status"];
-    vehicles[id]!.attributes.current_stop_sequence = apiResponse["included"][i]["attributes"]["current_stop_sequence"];
-    vehicles[id]!.attributes.direction_id          = apiResponse["included"][i]["attributes"]["direction_id"];
-    vehicles[id]!.attributes.label                 = apiResponse["included"][i]["attributes"]["label"];
-    vehicles[id]!.attributes.latitude              = apiResponse["included"][i]["attributes"]["latitude"];
-    vehicles[id]!.attributes.longitude             = apiResponse["included"][i]["attributes"]["longitude"];
-    vehicles[id]!.attributes.occupancy_status      = apiResponse["included"][i]["attributes"]["occupancy_status"];
-    vehicles[id]!.attributes.revenue               = apiResponse["included"][i]["attributes"]["revenue"];
-    vehicles[id]!.attributes.speed                 = apiResponse["included"][i]["attributes"]["speed"];
-
-    for(int j = 0; j < apiResponse["included"][i]["attributes"]["carriages"].length; j++) {
-      vehicles[id]!.attributes.carriages.add(Carriage());
-      vehicles[id]!.attributes.carriages[j].occupancy_status     = apiResponse["included"][i]["attributes"]["carriages"][j]["occupancy_status"];
-      vehicles[id]!.attributes.carriages[j].occupancy_percentage = apiResponse["included"][i]["attributes"]["carriages"][j]["occupancy_percentage"];
-      vehicles[id]!.attributes.carriages[j].label                = apiResponse["included"][i]["attributes"]["carriages"][j]["label"];
+      for(int j = 0; j < apiResponse["included"][i]["attributes"]["carriages"].length; j++) {
+        vehicles[id]!.attributes.carriages.add(Carriage());
+        vehicles[id]!.attributes.carriages[j].occupancy_status     = apiResponse["included"][i]["attributes"]["carriages"][j]["occupancy_status"];
+        vehicles[id]!.attributes.carriages[j].occupancy_percentage = apiResponse["included"][i]["attributes"]["carriages"][j]["occupancy_percentage"];
+        vehicles[id]!.attributes.carriages[j].label                = apiResponse["included"][i]["attributes"]["carriages"][j]["label"];
+      }
     }
   }
 }
 
-int timeToArrive(Schedule schedule) {
+int timeToArrive(Prediction schedule) {
   if(schedule.attributes.arrival_time == null) {
     return -1;
   }

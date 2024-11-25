@@ -41,7 +41,7 @@ class HexColor extends Color {
 //for any stations with multiple colors, this is a fixed color for them.
 String getStationColor(String station_id, String entryOneColor) {
   switch (station_id) {
-    
+
     case "place-state": //state
       return getColor("Orange");
     case "place-dwnxg": //dtx

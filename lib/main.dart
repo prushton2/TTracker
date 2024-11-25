@@ -29,6 +29,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Station Name',
       theme: ThemeData(
         colorScheme: ColorScheme(
@@ -66,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
     String station = "";
     String id = "";
 
-    int defaultIndex = 175;
+    int defaultIndex = 199;
     Stops.Stop stopInfo = Stops.stopInfo[defaultIndex];
 
     try {
@@ -84,29 +85,29 @@ class _MyHomePageState extends State<MyHomePage> {
     String trainData = await API.getSchedules(id, 60);
     API.parseAPIResponse(trainData);
     
-    String vehicleData = await API.getVehicleData(API.tripIDs);
-    API.parseVehicles(vehicleData);
+    // String vehicleData = await API.getVehicleData(API.tripIDs);
+    // API.parseVehicles(vehicleData);
 
     List<Widget> body = [];
 
 
 
 
-    for(int i = 0; i<API.schedules.length; i++) {
-      API.Schedule schedule = API.schedules[i];
-      API.Trip trip = API.trips[schedule.relationships.trip!.id]!;
+    for(int i = 0; i<API.predictions.length; i++) {
+      API.Prediction prediction = API.predictions[i];
+      API.Trip trip = API.trips[prediction.relationships.trip!.id]!;
+      API.Vehicle vehicle = API.vehicles[prediction.relationships.vehicle!.id]!;
 
       String destination = trip.attributes.headsign!;
-      String lineColor = TColors.getColor(schedule.relationships.route!.id); //trainData["data"][i]["relationships"]["route"]["data"]["id"]);
+      String lineColor = TColors.getColor(prediction.relationships.route!.id); //trainData["data"][i]["relationships"]["route"]["data"]["id"]);
 
       if(trains[destination] != null) {
         continue;
       }
 
-      if(API.timeToArrive(schedule) <= 0) {
+      if(API.timeToArrive(prediction) <= 0) {
         continue;
       }
-      API.Vehicle vehicle = API.vehicles[schedule.relationships.trip!.id]!;
       trains[destination] = true;
 
       List<Widget> carOccupancy = [Text("L")];
@@ -129,7 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
         );
       }
 
-      String arriveIn = (API.timeToArrive(schedule)/60).toInt().toString()+"m";
+      String arriveIn = (API.timeToArrive(prediction)/60).toInt().toString()+"m";
       body.add(
         Container(
           margin: EdgeInsets.only(top: 20),
@@ -148,7 +149,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     color: TColors.HexColor(lineColor)
                 ),
                 padding: EdgeInsets.all(10),
-                child: Text(trip.relationships.route!.id)
+                child: Text(prediction.relationships.route!.id)
             ),
             Container(
                 width: MediaQuery.sizeOf(context).width-100,
@@ -177,8 +178,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
     setState(() {
-      if(API.schedules.length >= 1) {
-        _color = TColors.getColor(API.schedules[0].relationships.route!.id);
+      if(API.predictions.length >= 1) {
+        _color = TColors.getColor(API.predictions[0].relationships.route!.id);
       } else {
         _color = "#888888";
       }

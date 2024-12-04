@@ -12,12 +12,6 @@ String getColor(String name) {
       return "#ED8B00";
     case "Green":
       return "#00843D";
-    case "Green":
-      return "#00843D";
-    case "Green":
-      return "#00843D";
-    case "Green":
-      return "#00843D";
     case "CR":
       return "#80276C";
     case "Shuttle":

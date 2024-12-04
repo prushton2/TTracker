@@ -40,20 +40,21 @@ Future<Position> determinePosition() async {
 }
 
 
-Stops.Stop getNearestStop(Position pos) {
+Stops.Stop getNearestStop(double longitude, double latitude) {
   double lowestDistance = 360;
-  Stops.Stop nearestStop = Stops.stopInfo[0];
-  for(int i = 0; i < Stops.stopInfo.length; i++) {
-    double dist = sqrt( pow(pos.latitude - Stops.stopInfo[i].latitude, 2) + pow(pos.longitude - Stops.stopInfo[i].longitude, 2));
+  String lowestID = "";
+  for(String key in Stops.stopInfo.keys) {
+    Stops.Stop value = Stops.stopInfo[key]!;
+    double dist = sqrt(pow(latitude - value.latitude, 2) + pow(longitude - value.longitude, 2));
 
     if(dist < lowestDistance) {
       lowestDistance = dist;
-      nearestStop = Stops.stopInfo[i];
+      lowestID = key;
     }
   }
 
   if(lowestDistance == 360) {
     throw Exception("How");
   }
-  return nearestStop;
+  return Stops.stopInfo[lowestID]!;
 }

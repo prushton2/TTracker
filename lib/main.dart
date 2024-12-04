@@ -1,7 +1,8 @@
 // import 'dart:nativewrappers/_internal/vm/lib/core_patch.dart';
 import 'dart:core';
-import 'dart:io';
+// import 'dart:io';
 import 'package:flutter/material.dart';
+// import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import 'dart:developer';
 
@@ -63,16 +64,17 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Widget> _body = [];
   Map<String, bool> trains = Map<String, bool>();
 
+
+
   Future<void> initialize() async {
     String station = "";
     String id = "";
 
-    int defaultIndex = 140;
-    Stops.Stop stopInfo = Stops.stopInfo[defaultIndex];
+    Stops.Stop stopInfo = Stops.stopInfo["place-north"]!;
 
     try {
       var pos = await Geolocator.determinePosition();
-      stopInfo = Geolocator.getNearestStop(pos);
+      stopInfo = Geolocator.getNearestStop(pos.longitude, pos.latitude);
     } catch (e) {
       log(e.toString());
     }
@@ -96,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
 
       String destination = trip.attributes.headsign!;
-      String lineColor = TColors.getColor(prediction.relationships.route!.id); //trainData["data"][i]["relationships"]["route"]["data"]["id"]);
+      String lineColor = TColors.getColor(prediction.relationships.route!.id);
 
       if(trains[destination] != null) {
         continue;
@@ -107,24 +109,11 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       trains[destination] = true;
 
-      List<Widget> carOccupancy = [Text("L")];
+      List<Widget> carOccupancy = getCarOccupancy(vehicle);
+      String nearestStop = "";
 
-      for(int j = 0; j < vehicle.attributes.carriages.length; j++) {
-
-        Color color = Colors.white;
-        if(vehicle.attributes.carriages[j].occupancy_percentage == null) {
-          color = Colors.grey;
-        } else if(vehicle.attributes.carriages[j].occupancy_percentage! > 60) {
-          color = Colors.red;
-        } else if (vehicle.attributes.carriages[j].occupancy_percentage! > 30) {
-          color = Colors.orange;
-        }
-        carOccupancy.add(
-          Text(
-            "C",
-            style: TextStyle(color: color)
-          )
-        );
+      if(vehicle.attributes.current_status == "STOPPED_AT") {
+        nearestStop = " at "+Geolocator.getNearestStop(vehicle.attributes.longitude!, vehicle.attributes.latitude!).name;
       }
 
       String arriveIn = (API.timeToArrive(prediction)/60).toInt().toString()+"m";
@@ -163,7 +152,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: EdgeInsets.all(20),
                 margin: EdgeInsetsDirectional.only(bottom: 10),
                 child: Align(alignment: Alignment.topLeft, child: Column(children: [
-                  Text(trip.attributes.headsign! + "     "  + arriveIn+"\n"+API.formatWord(vehicle.attributes.current_status!, "current_status"), textAlign: TextAlign.left),
+                  Text(trip.attributes.headsign! + "     "  + arriveIn+"\n"+API.formatWord(vehicle.attributes.current_status!, "current_status") + nearestStop, textAlign: TextAlign.left),
                   Row(children: carOccupancy)
                 ]))
             )
@@ -184,6 +173,29 @@ class _MyHomePageState extends State<MyHomePage> {
       _station = station;
       _body = body;
     });
+  }
+
+  List<Widget> getCarOccupancy(API.Vehicle vehicle) {
+    // List<Widget> carOccupancy = [ColorFiltered(colorFilter: ColorFilter.mode(Colors.white, BlendMode.color), child: Image.asset("assets/icons/subway-locomotive.jpg", width: 10))];
+    List<Widget> carOccupancy = [Text("L")];
+    for(int j = 0; j < vehicle.attributes.carriages.length; j++) {
+
+      Color color = Colors.white;
+      if(vehicle.attributes.carriages[j].occupancy_percentage == null) {
+        color = Colors.grey;
+      } else if(vehicle.attributes.carriages[j].occupancy_percentage! > 60) {
+        color = Colors.red;
+      } else if (vehicle.attributes.carriages[j].occupancy_percentage! > 30) {
+        color = Colors.orange;
+      }
+      carOccupancy.add(
+          Text(
+              "C",
+              style: TextStyle(color: color)
+          )
+      );
+    }
+    return carOccupancy;
   }
 
   @override

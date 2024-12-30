@@ -79,6 +79,10 @@ class _MyHomePageState extends State<MyHomePage> {
       log(e.toString());
     }
 
+    if(Stops.selectedStop != null) {
+      stopInfo = Stops.selectedStop!;
+    }
+
     station = stopInfo.name;
     id = stopInfo.id;
 
@@ -112,8 +116,9 @@ class _MyHomePageState extends State<MyHomePage> {
       List<Widget> carOccupancy = getCarOccupancy(vehicle);
       String nearestStop = "";
 
-      if(vehicle.attributes.current_status == "STOPPED_AT") {
-        nearestStop = " at "+Geolocator.getNearestStop(vehicle.attributes.longitude!, vehicle.attributes.latitude!).name;
+      if(vehicle.attributes.current_status == "STOPPED_AT" || vehicle.attributes.current_status == "INCOMING_AT") {
+        nearestStop = " at "; //vehicle.attributes.current_status == "STOPPED_AT" ? " at " : " to ";
+        nearestStop += Geolocator.getNearestStop(vehicle.attributes.longitude!, vehicle.attributes.latitude!).name;
       }
 
       String arriveIn = (API.timeToArrive(prediction)/60).toInt().toString()+"m";
@@ -135,7 +140,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     color: TColors.HexColor(lineColor)
                 ),
                 padding: EdgeInsets.all(10),
-                child: Text(prediction.relationships.route!.id)
+                child: Row(children: [Text(prediction.relationships.route!.id), Spacer(), Text(vehicle.id!)])
             ),
             Container(
                 width: MediaQuery.sizeOf(context).width-100,
@@ -198,6 +203,10 @@ class _MyHomePageState extends State<MyHomePage> {
     return carOccupancy;
   }
 
+  void selectStop() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => Stops.SelectStop(title: "Select Stop")));
+  }
+
   @override
   void initState() {
     initialize();
@@ -209,6 +218,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     // initialize();
+    _body.add(TextButton(onPressed: selectStop, child: const Text("Gear Icon (right aligned)", style:TextStyle(color: Colors.white))));
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: TColors.HexColor(_color),
@@ -216,7 +227,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Flex(
         direction: Axis.vertical,
-        children: [Expanded(
+        children: [ Expanded(
           child: ListView(
             children: _body
           )

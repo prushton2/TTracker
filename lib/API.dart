@@ -175,6 +175,9 @@ void parseAPIResponse(String response) {
 
     else if (apiResponse["included"][i]["type"] == "vehicle") {
       vehicles[id] = Vehicle();
+
+      vehicles[id]!.id                               = apiResponse["included"][i]["id"];
+
       vehicles[id]!.attributes.bearing               = apiResponse["included"][i]["attributes"]["bearing"];
       vehicles[id]!.attributes.carriages = [];
       vehicles[id]!.attributes.current_status        = apiResponse["included"][i]["attributes"]["current_status"];

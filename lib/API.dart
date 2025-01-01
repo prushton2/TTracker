@@ -3,6 +3,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer';
 
+int lastRequest = 0; //unix seconds
+int timeToLive = 9; //seconds
+String lastRequestedStopId = "";
+
 class Prediction_Attributes {
   String? arrival_time;
   int? arrival_uncertainty;
@@ -97,6 +101,13 @@ Map<String, Vehicle> vehicles = Map<String, Vehicle>();
 
 Future<String> getSchedules(String stopID, int lookAheadMinutes) async {
   DateTime now = DateTime.now();
+
+  //prevent API spam
+  if(lastRequest + timeToLive > (now.toUtc().millisecondsSinceEpoch/1000).toInt() && lastRequestedStopId == stopID) {
+    return "CheckLastRequest";
+  }
+  lastRequest = (now.toUtc().millisecondsSinceEpoch/1000).toInt();
+
   DateTime end = DateTime.now().add(Duration(minutes: lookAheadMinutes));
   var formatter = DateFormat("HH:mm");
   String fmt_now = formatter.format(now);
@@ -117,6 +128,9 @@ Future<String> getSchedules(String stopID, int lookAheadMinutes) async {
 }
 
 void parseAPIResponse(String response) {
+  if(response == "CheckLastRequest") {
+    return;
+  }
   var apiResponse = jsonDecode(response);
   predictions = [];
   for(int i = 0; i < apiResponse["data"].length; i++) {
@@ -152,6 +166,7 @@ void parseAPIResponse(String response) {
 
   if(apiResponse["included"] == null) {
     log("included is null");
+    log(response);
     return;
   }
   for(int i = 0; i < apiResponse["included"].length; i++) {

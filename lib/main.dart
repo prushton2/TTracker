@@ -24,6 +24,7 @@ class Train {
 }
 
 class MyApp extends StatelessWidget {
+
   const MyApp({super.key});
 
   // This widget is the root of your application.
@@ -54,6 +55,7 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
   final String title;
+
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
@@ -63,10 +65,13 @@ class _MyHomePageState extends State<MyHomePage> {
   String _color = "#888888";
   List<Widget> _body = [];
   Map<String, bool> trains = Map<String, bool>();
+  int selectedPage = 0;
 
 
 
   Future<void> initialize() async {
+
+    log("Initiating refresh");
     String station = "";
     String id = "";
 
@@ -83,6 +88,8 @@ class _MyHomePageState extends State<MyHomePage> {
       stopInfo = Stops.selectedStop!;
     }
 
+    log("retrieved stop");
+
     station = stopInfo.name;
     id = stopInfo.id;
 
@@ -91,6 +98,8 @@ class _MyHomePageState extends State<MyHomePage> {
     String trainData = await API.getSchedules(id, 60);
     API.parseAPIResponse(trainData);
     List<Widget> body = [];
+
+    log("Iterating over fetch");
 
     for(int i = 0; i<API.predictions.length; i++) {
       API.Prediction prediction = API.predictions[i];
@@ -164,9 +173,10 @@ class _MyHomePageState extends State<MyHomePage> {
           ])
         )
       );
+      log("iteration "+i.toString()+" complete");
     }
 
-
+    log("Updating state");
 
     setState(() {
       if(API.predictions.length >= 1) {
@@ -211,28 +221,68 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     initialize();
     Timer mytimer = Timer.periodic(Duration(seconds: 10), (timer) {
-      initialize();
+      if(selectedPage == 1) {
+        initialize();
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // initialize();
-    _body.add(TextButton(onPressed: selectStop, child: const Text("Gear Icon (right aligned)", style:TextStyle(color: Colors.white))));
+    var pageBody;
+
+    switch(selectedPage) {
+      // case 0:
+      //   break;
+      case 0:
+        pageBody = Flex(
+          direction: Axis.vertical,
+            children: [ Expanded(
+              child: ListView(
+                children: _body
+              )
+            )
+          ]
+        );
+        break;
+      case 1:
+        pageBody = Stops.SelectStop(title: "Select Stop");
+        break;
+    }
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: TColors.HexColor(_color),
         title: Text(_station),
       ),
-      body: Flex(
-        direction: Axis.vertical,
-        children: [ Expanded(
-          child: ListView(
-            children: _body
-          )
-        )
-      ])
+      body: pageBody,
+      bottomNavigationBar: new BottomNavigationBar(items: [
+        // new BottomNavigationBarItem(
+        //   icon: new Icon(Icons.settings),
+        //   label: "Settings",
+        // ),
+        new BottomNavigationBarItem(
+          icon: new Icon(Icons.schedule),
+          label: "Schedule",
+
+        ),
+        new BottomNavigationBarItem(
+          icon: new Icon(Icons.train),
+          label: "Select Stop",
+
+        ),
+        ],
+        currentIndex: selectedPage,
+        selectedItemColor: Colors.amber[800],
+        onTap: (e) => {
+          setState(() {
+            selectedPage = e;
+            if(e == 0) {
+              initialize();
+            }
+          })
+        },
+      ),
     );
   }
 }

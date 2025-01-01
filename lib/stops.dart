@@ -31,19 +31,54 @@ class SelectStop extends StatefulWidget {
 }
 
 class SelectStopState extends State<SelectStop> {
+  double buttonDistance = 2;
 
-  List<TextButton> RenderStopNames() {
-    for(String key in stopInfo.keys) {
+  List<Row> RenderStopNames() {
 
-    }
+    List<Row> textboxes = [
+      Row(children: [
+        TextButton(
+            onPressed: () => {selectedStop = null},
+            child: Text("Auto Detect", style:TextStyle(color: Colors.white)),
+            style: TextButton.styleFrom(
+                fixedSize: const Size(300, 100),
+                backgroundColor: Colors.black38,
+                shape: ContinuousRectangleBorder(),
+                overlayColor: Colors.grey
+            )
+        )], mainAxisAlignment: MainAxisAlignment.center)
+    ];
 
 
-    List<TextButton> textboxes = [TextButton(onPressed: () => {selectedStop = null}, child: Text("Auto Detect", style:TextStyle(color: Colors.white)))];
-
+    int counter = 1;
     for(String key in stopInfo.keys) {
       Stop value = stopInfo[key]!;
-      textboxes.add(TextButton(onPressed: () => {selectedStop = stopInfo[key]}, child: Text(value.name, style:TextStyle(color: Colors.white))));
 
+      TextButton button = TextButton(
+          onPressed: () => {selectedStop = stopInfo[key]},
+          child: Text(value.name, style:TextStyle(color: Colors.white)),
+          style: TextButton.styleFrom(
+            fixedSize: const Size(300, 100),
+            backgroundColor: Colors.black38,
+            shape: ContinuousRectangleBorder(),
+            overlayColor: Colors.grey
+          )
+      );
+
+      if(counter%2==0) {
+        textboxes.add(
+            Row(children: [button], mainAxisAlignment: MainAxisAlignment.center)
+        );
+      } else {
+        // if()
+        // textboxes.last.;
+        textboxes.last.children.add(SizedBox(width: buttonDistance));
+        textboxes.last.children.add(button);
+      }
+
+      // textboxes
+      // textboxes.add(TextButton(onPressed: () => {selectedStop = stopInfo[key]}, child: Text(value.name, style:TextStyle(color: Colors.white))));
+      counter++;
     }
     return textboxes;
   }
@@ -54,14 +89,6 @@ class SelectStopState extends State<SelectStop> {
   Widget build(BuildContext context) {
 
     return Scaffold (
-        appBar: AppBar(
-            title: Text(
-              "Select Stop",
-              // style: Theme.of(context).textTheme.displayLarge,
-            )
-        ),
-
-
         body: Column (
             children: <Widget> [
 

@@ -61,6 +61,7 @@ String getStationColor(String station_id, String entryOneColor) {
     case "place-jfk":   //umass
     case "place-qnctr": //quincy
     case "place-brntn": //braintree
+    case "place-harsq": //harvard square
       return getColor("Red");
   }
 

@@ -221,7 +221,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     initialize();
     Timer mytimer = Timer.periodic(Duration(seconds: 10), (timer) {
-      if(selectedPage == 1) {
+      if(selectedPage == 0) {
         initialize();
       }
     });
@@ -230,11 +230,15 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     var pageBody;
+    Color titleBarColor = TColors.HexColor("888888");
+    String titleBarText = "";
 
     switch(selectedPage) {
       // case 0:
       //   break;
       case 0:
+        titleBarColor = TColors.HexColor(_color);
+        titleBarText = _station;
         pageBody = Flex(
           direction: Axis.vertical,
             children: [ Expanded(
@@ -246,14 +250,16 @@ class _MyHomePageState extends State<MyHomePage> {
         );
         break;
       case 1:
+        titleBarText = "Select Stop";
+        titleBarColor = TColors.HexColor("000000");
         pageBody = Stops.SelectStop(title: "Select Stop");
         break;
     }
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: TColors.HexColor(_color),
-        title: Text(_station),
+        backgroundColor: titleBarColor,
+        title: Text(titleBarText),
       ),
       body: pageBody,
       bottomNavigationBar: new BottomNavigationBar(items: [

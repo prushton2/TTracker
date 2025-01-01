@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+bool isNumeric(String str) {
+  if(str == null) {
+    return false;
+  }
+  return double.tryParse(str) != null;
+}
 
 String getColor(String name) {
   name = name.split("-")[0];
@@ -17,6 +23,11 @@ String getColor(String name) {
     case "Shuttle":
       return "#FFC72C";
   }
+
+  if(isNumeric(name)) {
+    return "#DFA70C";
+  }
+
   return "#888888";
 }
 
@@ -63,6 +74,9 @@ String getStationColor(String station_id, String entryOneColor) {
     case "place-brntn": //braintree
     case "place-harsq": //harvard square
       return getColor("Red");
+
+    case "place-aport":
+      return getColor("Blue");
   }
 
   return entryOneColor;

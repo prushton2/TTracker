@@ -36,17 +36,23 @@ class SelectStopState extends State<SelectStop> {
   List<Row> RenderStopNames() {
 
     List<Row> textboxes = [
-      Row(children: [
-        TextButton(
-            onPressed: () => {selectedStop = null},
-            child: Text("Auto Detect", style:TextStyle(color: Colors.white)),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TextButton(
+            onPressed: () => {
+              setState(() => selectedStop = null)
+            },
             style: TextButton.styleFrom(
-                fixedSize: const Size(300, 100),
-                backgroundColor: Colors.black38,
-                shape: ContinuousRectangleBorder(),
-                overlayColor: Colors.grey
-            )
-        )], mainAxisAlignment: MainAxisAlignment.center)
+              fixedSize: Size(MediaQuery.sizeOf(context).width/3, 100),
+              backgroundColor: Colors.black38,
+              shape: const ContinuousRectangleBorder(),
+              overlayColor: Colors.white
+            ),
+            child: const Text("Auto Detect", style: TextStyle(color: Colors.white)),
+          )
+        ],
+      )
     ];
 
 
@@ -55,29 +61,24 @@ class SelectStopState extends State<SelectStop> {
       Stop value = stopInfo[key]!;
 
       TextButton button = TextButton(
-          onPressed: () => {selectedStop = stopInfo[key]},
-          child: Text(value.name, style:TextStyle(color: Colors.white)),
-          style: TextButton.styleFrom(
-            fixedSize: const Size(300, 100),
-            backgroundColor: Colors.black38,
-            shape: ContinuousRectangleBorder(),
-            overlayColor: Colors.grey
-          )
+        onPressed: () => {setState(() => selectedStop = stopInfo[key])},
+        style: TextButton.styleFrom(
+          fixedSize: Size(MediaQuery.sizeOf(context).width/3, 100),
+          backgroundColor: Colors.black38,
+          shape: const ContinuousRectangleBorder(),
+          overlayColor: Colors.white
+        ),
+        child: Text(value.name, style: const TextStyle(color: Colors.white)),
       );
 
       if(counter%2==0) {
         textboxes.add(
-            Row(children: [button], mainAxisAlignment: MainAxisAlignment.center)
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [button])
         );
       } else {
-        // if()
-        // textboxes.last.;
         textboxes.last.children.add(SizedBox(width: buttonDistance));
         textboxes.last.children.add(button);
       }
-
-      // textboxes
-      // textboxes.add(TextButton(onPressed: () => {selectedStop = stopInfo[key]}, child: Text(value.name, style:TextStyle(color: Colors.white))));
       counter++;
     }
     return textboxes;
@@ -91,7 +92,7 @@ class SelectStopState extends State<SelectStop> {
     return Scaffold (
         body: Column (
             children: <Widget> [
-
+              Text("Current Stop: "+ (selectedStop == null ? "Auto Detect" : selectedStop!.name)),
               Expanded(
                   child: ListView(
                     padding: const EdgeInsets.all(20),

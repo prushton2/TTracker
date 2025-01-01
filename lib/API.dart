@@ -106,6 +106,7 @@ Future<String> getSchedules(String stopID, int lookAheadMinutes) async {
   if(lastRequest + timeToLive > (now.toUtc().millisecondsSinceEpoch/1000).toInt() && lastRequestedStopId == stopID) {
     return "CheckLastRequest";
   }
+  lastRequestedStopId = stopID;
   lastRequest = (now.toUtc().millisecondsSinceEpoch/1000).toInt();
 
   DateTime end = DateTime.now().add(Duration(minutes: lookAheadMinutes));

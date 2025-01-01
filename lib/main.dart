@@ -167,6 +167,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 margin: EdgeInsetsDirectional.only(bottom: 10),
                 child: Align(alignment: Alignment.topLeft, child: Column(children: [
                   Text(trip.attributes.headsign! + "     "  + arriveIn+"\n"+API.formatWord(vehicle.attributes.current_status!, "current_status") + nearestStop, textAlign: TextAlign.left),
+                  SizedBox(height: 30),
                   Row(children: carOccupancy)
                 ]))
             )
@@ -192,7 +193,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<Widget> getCarOccupancy(API.Vehicle vehicle) {
     // List<Widget> carOccupancy = [ColorFiltered(colorFilter: ColorFilter.mode(Colors.white, BlendMode.color), child: Image.asset("assets/icons/subway-locomotive.jpg", width: 10))];
-    List<Widget> carOccupancy = [Text("L")];
+    List<Widget> carOccupancy = [];
     for(int j = 0; j < vehicle.attributes.carriages.length; j++) {
 
       Color color = Colors.white;
@@ -203,11 +204,9 @@ class _MyHomePageState extends State<MyHomePage> {
       } else if (vehicle.attributes.carriages[j].occupancy_percentage! > 30) {
         color = Colors.orange;
       }
+
       carOccupancy.add(
-          Text(
-              "C",
-              style: TextStyle(color: color)
-          )
+        Icon(Icons.directions_transit_rounded, color: color)
       );
     }
     return carOccupancy;
@@ -270,12 +269,10 @@ class _MyHomePageState extends State<MyHomePage> {
         new BottomNavigationBarItem(
           icon: new Icon(Icons.schedule),
           label: "Schedule",
-
         ),
         new BottomNavigationBarItem(
           icon: new Icon(Icons.train),
           label: "Select Stop",
-
         ),
         ],
         currentIndex: selectedPage,

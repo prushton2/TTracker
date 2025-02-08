@@ -33,20 +33,22 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Station Name',
-      theme: ThemeData(
-        colorScheme: ColorScheme(
-          brightness: Brightness.dark,
-          primary: Colors.black12,
-          onPrimary: Colors.white,
-          secondary: Colors.blue,
-          onSecondary: Colors.white,
-          error: Colors.orange,
-          onError: Colors.black,
-          surface: Colors.black12,
-          onSurface: Colors.white,
-        ),
-        useMaterial3: true,
-      ),
+      theme: ThemeData.dark(useMaterial3: true),
+      // theme: ThemeData.dark; //(
+      //   colorScheme: const ColorScheme(
+      //     brightness: Brightness.dark,
+      //     primary: Colors.black12,
+      //     accentColor: Colors.black12
+      //     // onPrimary: Colors.white,
+      //     // secondary: Colors.blue,
+      //     // onSecondary: Colors.white,
+      //     // error: Colors.orange,
+      //     // onError: Colors.black,
+      //     // surface: Colors.black12,
+      //     // onSurface: Colors.white,
+      //   ),
+      //   useMaterial3: true,
+      // ),
       home: const MyHomePage(title: 'Station Name'),
     );
   }

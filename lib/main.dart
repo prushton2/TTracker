@@ -10,6 +10,7 @@ import 'Colors.dart' as TColors;
 import 'API.dart' as API;
 import 'Geolocator.dart' as Geolocator;
 import 'stops.dart' as Stops;
+import 'Predictions.dart' as Predictions;
 
 void main() {
   runApp(const MyApp());
@@ -66,14 +67,13 @@ class _MyHomePageState extends State<MyHomePage> {
   String _station = "";
   String _color = "#888888";
   List<Widget> _body = [];
-  Map<String, bool> trains = Map<String, bool>();
+  // Map<String, bool> trains = Map<String, bool>();
   int selectedPage = 0;
 
 
 
   Future<void> initialize() async {
 
-    log("Initiating refresh");
     String station = "";
     String id = "";
 
@@ -90,96 +90,59 @@ class _MyHomePageState extends State<MyHomePage> {
       stopInfo = Stops.selectedStop!;
     }
 
-    log("retrieved stop");
 
     station = stopInfo.name;
     id = stopInfo.id;
 
-    trains = Map<String, bool>();
+    // trains = Map<String, bool>();
 
     String trainData = await API.getSchedules(id, 60);
     API.parseAPIResponse(trainData);
     List<Widget> body = [];
 
-    log("Iterating over fetch");
+    Map<String, List<API.Prediction>> predictions = Predictions.SortPredictions();
 
-    for(int i = 0; i<API.predictions.length; i++) {
-      API.Prediction prediction = API.predictions[i];
-      API.Trip trip = API.trips[prediction.relationships.trip!.id]!;
-      API.Vehicle vehicle = API.Vehicle();
-
-      if(prediction.relationships.vehicle != null) {
-        vehicle = API.vehicles[prediction.relationships.vehicle!.id]!;
-      }
-
-      String destination = trip.attributes.headsign!;
-      String lineColor = TColors.getColor(prediction.relationships.route!.id);
-
-      if(trains[destination] != null) {
-        continue;
-      }
-
-      if(API.timeToArrive(prediction) <= 0) {
-        continue;
-      }
-      trains[destination] = true;
-
-      List<Widget> carOccupancy = getCarOccupancy(vehicle);
-      String nearestStop = "";
-
-      if(vehicle.attributes.current_status == "STOPPED_AT" || vehicle.attributes.current_status == "INCOMING_AT") {
-        nearestStop = " at "; //vehicle.attributes.current_status == "STOPPED_AT" ? " at " : " to ";
-        nearestStop += Geolocator.getNearestStop(vehicle.attributes.longitude!, vehicle.attributes.latitude!).name;
-      }
-
-      String arriveIn = (API.timeToArrive(prediction)/60).toInt().toString()+"m";
-      body.add(
-        Container(
-          margin: EdgeInsets.only(top: 20),
-          child: Column(children: [
-            Container(
-                height: 50,
-                width: MediaQuery.sizeOf(context).width-100,
-                decoration: BoxDecoration(
-                    border: Border.all(
-                        color: TColors.HexColor(lineColor)
-                    ),
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20),
-                        topRight: Radius.circular(20)
-                    ),
-                    color: TColors.HexColor(lineColor)
-                ),
-                padding: EdgeInsets.all(10),
-                child: Row(children: [Text(prediction.relationships.route!.id), Spacer(), Text(vehicle.id!)])
-            ),
-            Container(
-                width: MediaQuery.sizeOf(context).width-100,
-                decoration: BoxDecoration(
-                    border: Border.all (
-                        strokeAlign: BorderSide.strokeAlignInside,
-                        color: TColors.HexColor(lineColor)
-                    ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20)
-                  )
-                ),
-                padding: EdgeInsets.all(20),
-                margin: EdgeInsetsDirectional.only(bottom: 10),
-                child: Align(alignment: Alignment.topLeft, child: Column(children: [
-                  Text(trip.attributes.headsign! + "     "  + arriveIn+"\n"+API.formatWord(vehicle.attributes.current_status!, "current_status") + nearestStop, textAlign: TextAlign.left),
-                  SizedBox(height: 30),
-                  Row(children: carOccupancy)
-                ]))
-            )
-          ])
-        )
-      );
-      log("iteration "+i.toString()+" complete");
+    for(String key in predictions.keys) {
+      // log(key);
+      // log(predictions[key].toString());
+      body.addAll(Predictions.renderPredictions(predictions[key], context));
     }
 
-    log("Updating state");
+    // for(int i = 0; i<API.predictions.length; i++) {
+    //   API.Prediction prediction = API.predictions[i];
+    //   API.Trip trip = API.trips[prediction.relationships.trip!.id]!;
+    //   API.Vehicle vehicle = API.Vehicle();
+    //
+    //   if(prediction.relationships.vehicle != null) {
+    //     vehicle = API.vehicles[prediction.relationships.vehicle!.id]!;
+    //   }
+    //
+    //   String destination = trip.attributes.headsign!;
+    //   String lineColor = TColors.getColor(prediction.relationships.route!.id);
+    //
+    //   if(trains[destination] != null) {
+    //     continue;
+    //   }
+    //
+    //   if(API.timeToArrive(prediction) <= 0) {
+    //     continue;
+    //   }
+    //   trains[destination] = true;
+    //
+    //   List<Widget> carOccupancy = getCarOccupancy(vehicle);
+    //   String nearestStop = "";
+    //
+    //   if(vehicle.attributes.current_status == "STOPPED_AT" || vehicle.attributes.current_status == "INCOMING_AT") {
+    //     nearestStop = " at "; //vehicle.attributes.current_status == "STOPPED_AT" ? " at " : " to ";
+    //     nearestStop += Geolocator.getNearestStop(vehicle.attributes.longitude!, vehicle.attributes.latitude!).name;
+    //   }
+    //
+    //   String arriveIn = (API.timeToArrive(prediction)/60).toInt().toString()+"m";
+    //
+    //
+    // }
+
+
 
     setState(() {
       if(API.predictions.length >= 1) {
@@ -221,7 +184,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     initialize();
-    Timer mytimer = Timer.periodic(Duration(seconds: 10), (timer) {
+    Timer mytimer = Timer.periodic(const Duration(seconds: 20), (timer) {
       if(selectedPage == 0) {
         initialize();
       }

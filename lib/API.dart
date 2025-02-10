@@ -77,6 +77,13 @@ class Prediction {
   String? id;
   Relationships relationships = Relationships();
   String? type;
+
+  String toString() {
+    if(id != null) {
+      return id.toString();
+    }
+    return "null";
+  }
 }
 
 class Trip {
@@ -163,13 +170,14 @@ void parseAPIResponse(String response) {
       vehicles[predictions[i].relationships.vehicle!.id] = Vehicle();
     }
     trips[predictions[i].relationships.trip!.id] = Trip();
-}
+  }
 
   if(apiResponse["included"] == null) {
     log("included is null");
     log(response);
     return;
   }
+
   for(int i = 0; i < apiResponse["included"].length; i++) {
     String id = apiResponse["included"][i]["id"];
 

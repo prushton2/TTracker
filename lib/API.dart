@@ -99,6 +99,21 @@ class Vehicle {
   String? type;
 }
 
+class VehicleInformation {
+  int id_lo = 0;
+  int id_hi = 0;
+  String type = "CRRC";
+
+  VehicleInformation(int _id_lo, int _id_hi, String _type) {
+    id_lo = _id_lo;
+    id_hi = _id_hi;
+    type = _type;
+  }
+
+  bool idInRange(int id) {
+    return (id >= id_lo) && (id <= id_hi);
+  }
+}
 
 
 List<String> tripIDs = [];
@@ -249,4 +264,90 @@ String formatWord(String word, String type) {
       break;
   }
   return word;
+}
+
+Map<String, List<VehicleInformation>> vehicleInfo = {
+  "Blue": [
+    VehicleInformation(0700, 0793, "Siemens")
+  ],
+  "Orange": [
+    VehicleInformation(1400, 1551, "CRRC")
+  ],
+  "Red": [
+    VehicleInformation(1500, 1523, "Pullman-Standard"),
+    VehicleInformation(1600, 1651, "Pullman-Standard"),
+    VehicleInformation(1700, 1757, "UTDC"),
+    VehicleInformation(1800, 1885, "Bombardier"),
+    VehicleInformation(1900, 2151, "CRRC"),
+  ],
+  "Green": [
+    VehicleInformation(3072, 3096, "Pullman-Standard"),
+    VehicleInformation(3222, 3271, "Pullman-Standard"),
+
+    VehicleInformation(3234, 3234, "Pullman-Standard"),
+    VehicleInformation(3260, 3260, "Pullman-Standard"),
+    VehicleInformation(3265, 3265, "Pullman-Standard"),
+
+    VehicleInformation(3600, 3699, "Kinki-Sharyo"),
+    VehicleInformation(3700, 3719, "Kinki-Sharyo"),
+
+    VehicleInformation(3800, 3894, "Breda"),
+
+    VehicleInformation(3900, 3923, "CAF"),
+    VehicleInformation(4001, 4102, "CAF"),
+  ],
+  "CR": [
+    VehicleInformation(1025, 1033, "F40PH-3C"),
+    VehicleInformation(1034, 1036, "F40PH-3C"),
+    VehicleInformation(1050, 1067, "F40PH-3C"),
+    VehicleInformation(1068, 1075, "F40PH-3C"),
+
+    VehicleInformation(1115, 1139, "GP40MC"),
+
+    VehicleInformation(2000, 2039, "HSP46"),
+
+    VehicleInformation(200, 202, "BTC-1C"),
+    VehicleInformation(204, 214, "BTC-1C"),
+    VehicleInformation(216, 258, "BTC-1C"),
+
+    VehicleInformation(350, 389, "BTC-1A"),
+
+    VehicleInformation(500, 532, "BTC-3"),
+    VehicleInformation(533, 536, "BTC-3"),
+    VehicleInformation(540, 540, "BTC-3"),
+
+    VehicleInformation(600, 653, "BTC-1B"),
+
+    VehicleInformation(700, 749, "BTC-4"),
+    VehicleInformation(750, 766, "BTC-4A"),
+    VehicleInformation(767, 781, "BTC-4B"),
+    VehicleInformation(800, 846, "BTC-4D"),
+    VehicleInformation(847, 886, "BTC-4D"),
+    VehicleInformation(900, 932, "BTC-4C"),
+
+    VehicleInformation(1500, 1533, "CTC-3"),
+    VehicleInformation(1600, 1652, "CTC-1B"),
+    VehicleInformation(1700, 1724, "CTC-4"),
+    VehicleInformation(1800, 1827, "CTC-5"),
+    VehicleInformation(1828, 1870, "CTC-5"),
+  ],
+};
+
+
+String getVehicleInfo(int id, String line) {
+  line = line.split("-")[0];
+  // log(line);
+
+  // try {
+  for(int i = 0; i < vehicleInfo[line]!.length; i++) {
+    if(vehicleInfo[line]![i].idInRange(id)) {
+      return vehicleInfo[line]![i].type;
+    }
+  }
+  // } catch (e) {
+  //   return "";
+  // }
+
+
+  return "";
 }

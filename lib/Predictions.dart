@@ -42,21 +42,44 @@ List<Widget> renderPredictions(List<API.Prediction>? predictions, BuildContext c
 
     API.Prediction prediction = Destinations[key]![0];
     API.Trip trip = API.trips[prediction.relationships.trip!.id]!;
-    API.Vehicle vehicle = API.Vehicle();
-
-    if(prediction.relationships.vehicle != null) {
-      vehicle = API.vehicles[prediction.relationships.vehicle!.id]!;
-    }
 
     String lineColor = TColors.getColor(prediction.relationships.route!.id);
 
     List<Widget> arrivalTimes = [];
 
     for(API.Prediction p in Destinations[key]!) {
+
+      API.Vehicle vehicle = API.Vehicle();
+
+      if(p.relationships.vehicle != null) {
+        vehicle = API.vehicles[p.relationships.vehicle!.id]!;
+      }
+
       String arriveIn = (API.timeToArrive(p)/60).toInt().toString()+"m";
+      String id = "";
+
+      try {
+        id = vehicle.attributes.carriages[0].label!;
+      } catch (e) {
+        if(vehicle.attributes.label == "") {
+          id = "0";
+        } else {
+          id = vehicle.attributes.label!;
+        }
+      }
+
+      log(id);
 
       arrivalTimes.add(
-        Row(children: [Text(arriveIn), Spacer(), getCarOccupancy(vehicle)])
+        Row(children: [
+          Text(arriveIn),
+          const Spacer(),
+          Text(API.getVehicleInfo(
+              int.parse(id),
+              prediction.relationships.route!.id)
+          ),
+          Text(" "+id)
+        ])
       );
     }
 

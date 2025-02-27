@@ -22,6 +22,10 @@ class Stop {
 
 Stop? selectedStop = null;
 
+Widget renderStopInfo() {
+  return Row(children: []);
+}
+
 class SelectStop extends StatefulWidget {
   const SelectStop({super.key, required this.title});
   final String title;

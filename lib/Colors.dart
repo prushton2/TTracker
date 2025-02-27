@@ -19,6 +19,12 @@ String getColor(String name) {
       return "#80276C";
     case "Shuttle":
       return "#FFC72C";
+    case "SL1":
+    case "SL2":
+    case "SL3":
+    case "SL4":
+    case "SL5":
+      return "#7C878E";
   }
 
   if(isNumeric(name)) {

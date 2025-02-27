@@ -99,17 +99,24 @@ class _MyHomePageState extends State<MyHomePage> {
       stations.markers.add(
         Marker(
           point: latLng.LatLng(Stops.stopInfo[key]!.latitude, Stops.stopInfo[key]!.longitude),
-          width: 10,
-          height: 10,
-          child: GestureDetector(
-            child: Image.asset("assets/icons/MBTA.png"),
-            onTap: () {log("Tapped ${Stops.stopInfo[key]!.id}");},
-          )
-          // child: FlutterLogo()
+          rotate: true,
+          width: 50,
+          height: 50,
+          child:
+            TextButton(
+              onPressed: () {
+                log("Tapped ${Stops.stopInfo[key]!.name}");
+                Stops.selectedStop = Stops.stopInfo[key];
+              },
+              child: Image.asset(
+                "assets/icons/MBTA.png",
+                width: 10,
+                height: 10
+              ),
+            ),
         )
       );
       // log(stations.markers.length.toString());
-
     }
   }
 
@@ -121,10 +128,10 @@ class _MyHomePageState extends State<MyHomePage> {
       createPolyLines();
     }
 
-    if(stations.markers.isEmpty) {
-      createStations();
-    }
-
+    // if(stations.markers.isEmpty) {
+    createStations();
+    // }
+    map = null;
     // ??= only assigns value to a null variable
     map ??= FlutterMap(
       mapController: MapController(),
@@ -141,6 +148,8 @@ class _MyHomePageState extends State<MyHomePage> {
         stations
       ]
     );
+
+
 
 
 

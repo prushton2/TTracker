@@ -3,14 +3,15 @@ import 'dart:core';
 // import 'dart:io';
 import 'package:flutter/material.dart';
 // import 'package:geolocator/geolocator.dart';
-import 'dart:async';
 import 'dart:developer';
 
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart' as plp;
+import "package:latlong2/latlong.dart" as latLng;
+
 import 'Colors.dart' as TColors;
-import 'API.dart' as API;
-import 'Geolocator.dart' as Geolocator;
 import 'stops.dart' as Stops;
-import 'Predictions.dart' as Predictions;
+import 'Shapes.dart' as Shapes;
 
 void main() {
   runApp(const MyApp());
@@ -64,193 +65,85 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String _station = "";
-  String _color = "#888888";
-  List<Widget> _body = [];
-  // Map<String, bool> trains = Map<String, bool>();
-  int selectedPage = 0;
+  PolylineLayer subwayLines = PolylineLayer(polylines: []);
+  MarkerLayer stations = MarkerLayer(markers: []);
+  Widget? map; // = FlutterMap();
 
+  void createPolyLines() {
+    log("making poylines");
+    plp.PolylinePoints polylinePoints = plp.PolylinePoints();
 
+    subwayLines = PolylineLayer(polylines: []);
 
-  Future<void> initialize() async {
+    for(String key in Shapes.lines.keys) {
+      for(String polyline in Shapes.lines[key]!) {
+        List<plp.PointLatLng> result = polylinePoints.decodePolyline(polyline);
+        List<latLng.LatLng> points = result.map((e) => latLng.LatLng(e.latitude, e.longitude)).toList();
 
-    String station = "";
-    String id = "";
-
-    Stops.Stop stopInfo = Stops.stopInfo["place-north"]!;
-
-    try {
-      var pos = await Geolocator.determinePosition();
-      stopInfo = Geolocator.getNearestStop(pos.longitude, pos.latitude);
-    } catch (e) {
-      log(e.toString());
-    }
-
-    if(Stops.selectedStop != null) {
-      stopInfo = Stops.selectedStop!;
-    }
-
-
-    station = stopInfo.name;
-    id = stopInfo.id;
-
-    // trains = Map<String, bool>();
-
-    String trainData = await API.getSchedules(id, 60);
-    API.parseAPIResponse(trainData);
-    List<Widget> body = [];
-
-    Map<String, List<API.Prediction>> predictions = Predictions.SortPredictions();
-
-    for(String key in predictions.keys) {
-      // log(key);
-      // log(predictions[key].toString());
-      body.addAll(Predictions.renderPredictions(predictions[key], context));
-    }
-
-    // for(int i = 0; i<API.predictions.length; i++) {
-    //   API.Prediction prediction = API.predictions[i];
-    //   API.Trip trip = API.trips[prediction.relationships.trip!.id]!;
-    //   API.Vehicle vehicle = API.Vehicle();
-    //
-    //   if(prediction.relationships.vehicle != null) {
-    //     vehicle = API.vehicles[prediction.relationships.vehicle!.id]!;
-    //   }
-    //
-    //   String destination = trip.attributes.headsign!;
-    //   String lineColor = TColors.getColor(prediction.relationships.route!.id);
-    //
-    //   if(trains[destination] != null) {
-    //     continue;
-    //   }
-    //
-    //   if(API.timeToArrive(prediction) <= 0) {
-    //     continue;
-    //   }
-    //   trains[destination] = true;
-    //
-    //   List<Widget> carOccupancy = getCarOccupancy(vehicle);
-    //   String nearestStop = "";
-    //
-    //   if(vehicle.attributes.current_status == "STOPPED_AT" || vehicle.attributes.current_status == "INCOMING_AT") {
-    //     nearestStop = " at "; //vehicle.attributes.current_status == "STOPPED_AT" ? " at " : " to ";
-    //     nearestStop += Geolocator.getNearestStop(vehicle.attributes.longitude!, vehicle.attributes.latitude!).name;
-    //   }
-    //
-    //   String arriveIn = (API.timeToArrive(prediction)/60).toInt().toString()+"m";
-    //
-    //
-    // }
-
-
-
-    setState(() {
-      if(API.predictions.length >= 1) {
-        _color = TColors.getColor(API.predictions[0].relationships.route!.id);
-      } else {
-        _color = "#888888";
+        subwayLines.polylines.add(
+          Polyline(
+              points: points,
+              color: TColors.HexColor(TColors.getColor(key))
+          )
+        );
       }
-      _color = TColors.getStationColor(id, _color);
-      _station = station;
-      _body = body;
-    });
+    }
   }
 
-  List<Widget> getCarOccupancy(API.Vehicle vehicle) {
-    // List<Widget> carOccupancy = [ColorFiltered(colorFilter: ColorFilter.mode(Colors.white, BlendMode.color), child: Image.asset("assets/icons/subway-locomotive.jpg", width: 10))];
-    List<Widget> carOccupancy = [];
-    for(int j = 0; j < vehicle.attributes.carriages.length; j++) {
+  void createStations() {
+    log("Making stations");
+    stations = MarkerLayer(markers: []);
 
-      Color color = Colors.white;
-      if(vehicle.attributes.carriages[j].occupancy_percentage == null) {
-        color = Colors.grey;
-      } else if(vehicle.attributes.carriages[j].occupancy_percentage! > 60) {
-        color = Colors.red;
-      } else if (vehicle.attributes.carriages[j].occupancy_percentage! > 30) {
-        color = Colors.orange;
-      }
-
-      carOccupancy.add(
-        Icon(Icons.directions_transit_rounded, color: color)
+    for(String key in Stops.stopInfo.keys) {
+      // log(Stops.stopInfo[key]!.id);
+      stations.markers.add(
+        Marker(
+          point: latLng.LatLng(Stops.stopInfo[key]!.latitude, Stops.stopInfo[key]!.longitude),
+          width: 10,
+          height: 10,
+          child: GestureDetector(
+            child: Image.asset("assets/icons/MBTA.png"),
+            onTap: () {log("Tapped ${Stops.stopInfo[key]!.id}");},
+          )
+          // child: FlutterLogo()
+        )
       );
+      // log(stations.markers.length.toString());
+
     }
-    return carOccupancy;
   }
 
-  void selectStop() {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => Stops.SelectStop(title: "Select Stop")));
-  }
 
-  @override
-  void initState() {
-    initialize();
-    Timer mytimer = Timer.periodic(const Duration(seconds: 20), (timer) {
-      if(selectedPage == 0) {
-        initialize();
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    var pageBody;
-    Color titleBarColor = TColors.HexColor("888888");
-    String titleBarText = "";
-
-    switch(selectedPage) {
-      // case 0:
-      //   break;
-      case 0:
-        titleBarColor = TColors.HexColor(_color);
-        titleBarText = _station;
-        pageBody = Flex(
-          direction: Axis.vertical,
-            children: [ Expanded(
-              child: ListView(
-                children: _body
-              )
-            )
-          ]
-        );
-        break;
-      case 1:
-        titleBarText = "Select Stop";
-        titleBarColor = TColors.HexColor("000000");
-        pageBody = Stops.SelectStop(title: "Select Stop");
-        break;
+    if(subwayLines.polylines.isEmpty) {
+      createPolyLines();
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: titleBarColor,
-        title: Text(titleBarText),
+    if(stations.markers.isEmpty) {
+      createStations();
+    }
+
+    // ??= only assigns value to a null variable
+    map ??= FlutterMap(
+      mapController: MapController(),
+      options: const MapOptions(
+          initialCenter: latLng.LatLng(42.36041830331139, -71.0580009624248),
+          backgroundColor: Colors.black
       ),
-      body: pageBody,
-      bottomNavigationBar: new BottomNavigationBar(items: [
-        // new BottomNavigationBarItem(
-        //   icon: new Icon(Icons.settings),
-        //   label: "Settings",
-        // ),
-        new BottomNavigationBarItem(
-          icon: new Icon(Icons.schedule),
-          label: "Schedule",
+      children: [
+        TileLayer(
+          urlTemplate: 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+          userAgentPackageName: 'dev.prushton.ttracker',
         ),
-        new BottomNavigationBarItem(
-          icon: new Icon(Icons.train),
-          label: "Select Stop",
-        ),
-        ],
-        currentIndex: selectedPage,
-        selectedItemColor: Colors.amber[800],
-        onTap: (e) => {
-          setState(() {
-            selectedPage = e;
-            if(e == 0) {
-              initialize();
-            }
-          })
-        },
-      ),
+        subwayLines,
+        stations
+      ]
     );
+
+
+
+    return map!;
   }
 }

@@ -1,12 +1,11 @@
 import 'dart:core';
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'dart:developer';
 import 'API.dart' as API;
 import 'Colors.dart' as TColors;
 
 Map<String, List<API.Prediction>> SortPredictions() {
-  Map<String, List<API.Prediction>> sortedPredictions = Map<String, List<API.Prediction>>();
+  Map<String, List<API.Prediction>> sortedPredictions = <String, List<API.Prediction>>{};
 
   for(int i = 0; i < API.predictions.length; i++) {
     String name = API.predictions[i].relationships.route!.id.split("-")[0];
@@ -21,7 +20,7 @@ Map<String, List<API.Prediction>> SortPredictions() {
 
 List<Widget> renderPredictions(List<API.Prediction>? predictions, BuildContext context) {
   List<Widget> body = [];
-  Map<String, List<API.Prediction>> Destinations = Map<String, List<API.Prediction>>();
+  Map<String, List<API.Prediction>> Destinations = <String, List<API.Prediction>>{};
 
   if(predictions == null) {
     return [];
@@ -55,7 +54,7 @@ List<Widget> renderPredictions(List<API.Prediction>? predictions, BuildContext c
         vehicle = API.vehicles[p.relationships.vehicle!.id]!;
       }
 
-      String arriveIn = (API.timeToArrive(p)/60).toInt().toString()+"m";
+      String arriveIn = "${(API.timeToArrive(p)/60).toInt()}m";
       String id = "";
 
       try {
@@ -78,7 +77,7 @@ List<Widget> renderPredictions(List<API.Prediction>? predictions, BuildContext c
               int.parse(id),
               prediction.relationships.route!.id)
           ),
-          Text(" "+id)
+          Text(" $id")
         ])
       );
     }
@@ -86,7 +85,7 @@ List<Widget> renderPredictions(List<API.Prediction>? predictions, BuildContext c
 
     body.add(
       Container(
-        margin: EdgeInsets.only(top: 20),
+        margin: const EdgeInsets.only(top: 20),
         child: Column(children: [
           Container(
               height: 50,
@@ -95,14 +94,14 @@ List<Widget> renderPredictions(List<API.Prediction>? predictions, BuildContext c
                   border: Border.all(
                       color: TColors.HexColor(lineColor)
                   ),
-                  borderRadius: BorderRadius.only(
+                  borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(20),
                       topRight: Radius.circular(20)
                   ),
                   color: TColors.HexColor(lineColor)
               ),
-              padding: EdgeInsets.all(10),
-              child: Row(children: [Text(trip.attributes.headsign!), Spacer(), Text(prediction.relationships.route!.id)])
+              padding: const EdgeInsets.all(10),
+              child: Row(children: [Text(trip.attributes.headsign!), const Spacer(), Text(prediction.relationships.route!.id)])
           ),
 
           Container(
@@ -112,13 +111,13 @@ List<Widget> renderPredictions(List<API.Prediction>? predictions, BuildContext c
                       strokeAlign: BorderSide.strokeAlignInside,
                       color: TColors.HexColor(lineColor)
                   ),
-                  borderRadius: BorderRadius.only(
+                  borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(20),
                       bottomRight: Radius.circular(20)
                   )
               ),
-              padding: EdgeInsets.all(20),
-              margin: EdgeInsetsDirectional.only(bottom: 10),
+              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsetsDirectional.only(bottom: 10),
               child: Column(
                 children: arrivalTimes,
               )

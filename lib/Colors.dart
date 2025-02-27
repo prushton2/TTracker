@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
 bool isNumeric(String str) {
-  if(str == null) {
-    return false;
-  }
   return double.tryParse(str) != null;
 }
 
@@ -35,7 +32,7 @@ class HexColor extends Color {
   static int _getColorFromHex(String hexColor) {
     hexColor = hexColor.toUpperCase().replaceAll("#", "");
     if (hexColor.length == 6) {
-      hexColor = "FF" + hexColor;
+      hexColor = "FF$hexColor";
     }
     return int.parse(hexColor, radix: 16);
   }
@@ -44,8 +41,8 @@ class HexColor extends Color {
 }
 
 //for any stations with multiple colors, this is a fixed color for them.
-String getStationColor(String station_id, String entryOneColor) {
-  switch (station_id) {
+String getStationColor(String stationId, String entryOneColor) {
+  switch (stationId) {
 
     case "place-state": //state
       return getColor("Orange");

@@ -44,10 +44,10 @@ class SelectStopState extends State<SelectStop> {
               setState(() => selectedStop = null)
             },
             style: TextButton.styleFrom(
-              fixedSize: Size(MediaQuery.sizeOf(context).width/3, 100),
-              backgroundColor: Colors.black38,
-              shape: const ContinuousRectangleBorder(),
-              overlayColor: Colors.white
+                fixedSize: Size(MediaQuery.sizeOf(context).width/3, 100),
+                backgroundColor: Colors.black38,
+                shape: const ContinuousRectangleBorder(),
+                overlayColor: Colors.white
             ),
             child: const Text("Auto Detect", style: TextStyle(color: Colors.white)),
           )
@@ -63,17 +63,17 @@ class SelectStopState extends State<SelectStop> {
       TextButton button = TextButton(
         onPressed: () => {setState(() => selectedStop = stopInfo[key])},
         style: TextButton.styleFrom(
-          fixedSize: Size(MediaQuery.sizeOf(context).width/3, 100),
-          backgroundColor: Colors.black38,
-          shape: const ContinuousRectangleBorder(),
-          overlayColor: Colors.white
+            fixedSize: Size(MediaQuery.sizeOf(context).width/3, 100),
+            backgroundColor: Colors.black38,
+            shape: const ContinuousRectangleBorder(),
+            overlayColor: Colors.white
         ),
         child: Text(value.name, style: const TextStyle(color: Colors.white)),
       );
 
       if(counter%2==0) {
         textboxes.add(
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [button])
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [button])
         );
       } else {
         textboxes.last.children.add(SizedBox(width: buttonDistance));

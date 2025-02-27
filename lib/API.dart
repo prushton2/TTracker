@@ -78,6 +78,7 @@ class Prediction {
   Relationships relationships = Relationships();
   String? type;
 
+  @override
   String toString() {
     if(id != null) {
       return id.toString();
@@ -104,10 +105,10 @@ class VehicleInformation {
   int id_hi = 0;
   String type = "CRRC";
 
-  VehicleInformation(int _id_lo, int _id_hi, String _type) {
-    id_lo = _id_lo;
-    id_hi = _id_hi;
-    type = _type;
+  VehicleInformation(int id_lo, int id_hi, String type) {
+    id_lo = id_lo;
+    id_hi = id_hi;
+    type = type;
   }
 
   bool idInRange(int id) {
@@ -118,8 +119,8 @@ class VehicleInformation {
 
 List<String> tripIDs = [];
 List<Prediction> predictions = [];
-Map<String, Trip> trips = Map<String, Trip>();
-Map<String, Vehicle> vehicles = Map<String, Vehicle>();
+Map<String, Trip> trips = <String, Trip>{};
+Map<String, Vehicle> vehicles = <String, Vehicle>{};
 
 Future<String> getSchedules(String stopID, int lookAheadMinutes) async {
   DateTime now = DateTime.now();
@@ -133,17 +134,17 @@ Future<String> getSchedules(String stopID, int lookAheadMinutes) async {
 
   DateTime end = DateTime.now().add(Duration(minutes: lookAheadMinutes));
   var formatter = DateFormat("HH:mm");
-  String fmt_now = formatter.format(now);
-  String fmt_end = formatter.format(end);
+  String fmtNow = formatter.format(now);
+  String fmtEnd = formatter.format(end);
 
-  if(int.parse(fmt_now.split(":")[0]) <= 2) {
-    fmt_now = (int.parse(fmt_now.split(":")[0]) + 24).toString() + ":" + fmt_now.split(":")[1];
+  if(int.parse(fmtNow.split(":")[0]) <= 2) {
+    fmtNow = "${int.parse(fmtNow.split(":")[0]) + 24}:${fmtNow.split(":")[1]}";
   }
-  if(int.parse(fmt_end.split(":")[0]) <= 2) {
-    fmt_end = (int.parse(fmt_end.split(":")[0]) + 24).toString() + ":" + fmt_end.split(":")[1];
+  if(int.parse(fmtEnd.split(":")[0]) <= 2) {
+    fmtEnd = "${int.parse(fmtEnd.split(":")[0]) + 24}:${fmtEnd.split(":")[1]}";
   }
 
-  var urlString = "https://api-v3.mbta.com/predictions?filter[stop]="+stopID+"&include=vehicle,trip&sort=arrival_time";
+  var urlString = "https://api-v3.mbta.com/predictions?filter[stop]=$stopID&include=vehicle,trip&sort=arrival_time";
   log(urlString);
   var url = Uri.parse(urlString);
   var response = await http.get(url);
@@ -253,7 +254,7 @@ int timeToArrive(Prediction schedule) {
 
 String formatWord(String word, String type) {
   word = word.replaceAll("_", " ");
-  if(word.length >= 1) {
+  if(word.isNotEmpty) {
     word = "${word[0]}${word.substring(1).toLowerCase()}";
   }
   switch(type) {

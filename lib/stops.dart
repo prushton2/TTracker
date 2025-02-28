@@ -23,7 +23,10 @@ class Stop {
 Stop? selectedStop = null;
 
 Widget renderStopInfo() {
-  return Row(children: []);
+  if(selectedStop == null) {
+    return const Text("");
+  }
+  return const Row(children: []);
 }
 
 class SelectStop extends StatefulWidget {

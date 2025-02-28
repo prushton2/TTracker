@@ -7,6 +7,7 @@ bool isNumeric(String str) {
 String getColor(String name) {
   name = name.split("-")[0];
   switch(name) {
+    case "Mattapan":
     case "Red":
       return "#DA291C";
     case "Blue":

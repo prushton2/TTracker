@@ -8,6 +8,7 @@ import 'dart:async';
 
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart' as plp;
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import "package:latlong2/latlong.dart" as latLng;
 
 import 'Colors.dart' as TColors;
@@ -46,12 +47,14 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   PolylineLayer subwayLines = PolylineLayer(polylines: []);
   MarkerLayer stations = MarkerLayer(markers: []);
+  MarkerLayer trains = MarkerLayer(markers: []);
   FlutterMap? map;
 
+  MapController mapController = MapController();
   MapOptions options = const MapOptions(
       initialCenter: latLng.LatLng(42.36041830331139, -71.0580009624248),
       backgroundColor: Colors.black,
-      keepAlive: true,
+      keepAlive: true
   );
 
   void createPolyLines() {
@@ -108,32 +111,43 @@ class _MyHomePageState extends State<MyHomePage> {
 
   }
 
-  MarkerLayer createTrains() {
-    MarkerLayer trains = MarkerLayer(markers: []);
+  void createTrains() {
+    MarkerLayer newtrains = MarkerLayer(markers: []);
 
     for(String key in API.vehicles.keys) {
-      trains.markers.add(
+      newtrains.markers.add(
         Marker(
-          point: latLng.LatLng(API.vehicles[key]!.attributes.latitude!, API.vehicles[key]!.attributes.latitude!),
-          rotate: true,
-          width: 20,
-          height: 20,
-          child: FlutterLogo()
+          key: Key(key),
+          point: latLng.LatLng(API.vehicles[key]!.attributes.latitude!, API.vehicles[key]!.attributes.longitude!),
+          // rotate: true,
+          width: 10,
+          // alignment: const Alignment(-5, -5),
+          height: 10,
+          child: TextButton(
+              onPressed: () {},
+              child: Transform.rotate(
+                  angle: API.vehicles[key]!.attributes.bearing.toDouble(),
+                  child: Icon(
+                    Icons.arrow_circle_up,
+                    color: TColors.HexColor(TColors.getColor(API.vehicles[key]!.relationships!.route!.id))
+                )
+              )
+          )
         )
       );
     }
-
-    return trains;
+    setState(() {
+      trains = newtrains;
+    });
   }
 
   @override
   void initState() {
-    // initialize();
-    Timer mytimer = Timer.periodic(Duration(seconds: 10), (timer) {
-
-      API.getVehicleData();
-      log("Created new vehicles");
-      map!.children[3] = createTrains();
+    Timer mytimer = Timer.periodic(Duration(seconds: 10), (timer) async {
+      await API.getVehicleData();
+      createTrains();
+      // log("Created new vehicles");
+      // log("Trains: " + trains.markers.length.toString());
     });
   }
 
@@ -150,8 +164,8 @@ class _MyHomePageState extends State<MyHomePage> {
       stations = createStations();
     }
 
-    map ??= FlutterMap(
-        mapController: MapController(),
+    map = FlutterMap(
+        mapController: mapController,
         options: options,
         children: [
           TileLayer(
@@ -159,8 +173,36 @@ class _MyHomePageState extends State<MyHomePage> {
             userAgentPackageName: 'dev.prushton.ttracker',
           ),
           subwayLines,
-          stations,
-          createTrains()
+          MarkerClusterLayerWidget(
+            options: MarkerClusterLayerOptions(
+              maxClusterRadius: 20,
+              size: const Size(10, 10),
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(50),
+              maxZoom: 15,
+              markers: trains.markers,
+              builder: (context, markers) {
+                return const Text("");
+              },
+            ),
+          ),
+          MarkerClusterLayerWidget(
+            options: MarkerClusterLayerOptions(
+              maxClusterRadius: 45,
+              size: const Size(10, 10),
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(50),
+              maxZoom: 15,
+              markers: stations.markers,
+              builder: (context, markers) {
+                return Image.asset(
+                    "assets/icons/MBTA.png",
+                    width: 10,
+                    height: 10
+                );
+              },
+            ),
+          ),
         ]
     );
 

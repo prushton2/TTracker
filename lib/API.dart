@@ -11,10 +11,11 @@ class Vehicle {
   Vehicle_Attributes attributes = Vehicle_Attributes();
   String? id;
   String? type;
+  Relationships? relationships;
 }
 
 class Vehicle_Attributes {
-  int? bearing = -1;
+  int bearing = -1;
   List<Carriage> carriages = [];
   String? current_status = "";
   int? current_stop_sequence = -1;
@@ -86,7 +87,7 @@ Future<void> getVehicleData() async {
   // lastRequestedStopId = stopID;
   lastRequest = (now.toUtc().millisecondsSinceEpoch/1000).toInt();
 
-  var urlString = "https://api-v3.mbta.com/vehicles?filter[route_type]=0,1";
+  var urlString = "https://api-v3.mbta.com/vehicles?filter[route_type]=0,1,2";
   // log(urlString);
   var url = Uri.parse(urlString);
   var apiResponse = jsonDecode((await http.get(url)).body);
@@ -115,7 +116,7 @@ Future<void> getVehicleData() async {
 
       vehicles[id]!.id = apiResponse["data"][i]["id"];
 
-      vehicles[id]!.attributes.bearing = apiResponse["data"][i]["attributes"]["bearing"];
+      vehicles[id]!.attributes.bearing = apiResponse["data"][i]["attributes"]["bearing"] != null ? apiResponse["data"][i]["attributes"]["bearing"] : 0;
       vehicles[id]!.attributes.carriages = [];
       vehicles[id]!.attributes.current_status = apiResponse["data"][i]["attributes"]["current_status"];
       vehicles[id]!.attributes.current_stop_sequence = apiResponse["data"][i]["attributes"]["current_stop_sequence"];
@@ -133,6 +134,14 @@ Future<void> getVehicleData() async {
         vehicles[id]!.attributes.carriages[j].occupancy_percentage = apiResponse["data"][i]["attributes"]["carriages"][j]["occupancy_percentage"];
         vehicles[id]!.attributes.carriages[j].label = apiResponse["data"][i]["attributes"]["carriages"][j]["label"];
       }
+      vehicles[id]!.relationships = Relationships();
+      vehicles[id]!.relationships!.route = Data(
+          apiResponse["data"][i]["relationships"]["route"]["data"]["id"],
+          apiResponse["data"][i]["relationships"]["route"]["data"]["type"]
+      );
+      // vehicles[id]!.relationships.route!.id =   apiResponse["data"][i]["relationships"]["route"]["data"]["id"];
+      // vehicles[id]!.relationships.route!.type = apiResponse["data"][i]["relationships"]["route"]["data"]["type"];
+
     }
   }
 }

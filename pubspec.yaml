@@ -41,6 +41,7 @@ dependencies:
   flutter_map: ^7.0.2
   flutter_polyline_points: ^2.1.0
   latlong2: ^0.9.1
+  flutter_map_marker_cluster: ^1.4.0
 
 dev_dependencies:
   flutter_test:
